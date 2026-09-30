@@ -351,7 +351,10 @@ class ImmersiveActivity : Activity() {
     private fun setupActions() {
         btnFavorite.setOnClickListener { toggleFavorite() }
         findViewById<Button>(R.id.btn_menu).setOnClickListener { showMenu() }
-        findViewById<Button>(R.id.btn_playlist).setOnClickListener { openDrawer() }
+        findViewById<Button>(R.id.btn_playlist).setOnClickListener {
+            // 开关式：点一下进播放列表，再点一下返回播放
+            if (drawerOpen) closeDrawer() else openDrawer()
+        }
     }
 
     private fun toggleFavorite() {
@@ -472,11 +475,15 @@ class ImmersiveActivity : Activity() {
     private fun openDrawer() {
         if (drawerOpen) return
         drawerOpen = true
+        refreshChrome()   // 先同步当前高亮
         drawer.visibility = View.VISIBLE
         drawer.post {
             drawer.translationX = -drawer.width.toFloat()
             drawer.animate().translationX(0f).setDuration(DRAWER_ANIM_MS).start()
             content.animate().translationX(content.width * 0.22f).setDuration(DRAWER_ANIM_MS).start()
+            // 列表自动跳转到正在播放的位置
+            val idx = controller?.currentMediaItemIndex ?: 0
+            playlistList.setSelection(idx)
         }
     }
 
