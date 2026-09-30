@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.GridView
 import android.widget.ListView
 import android.widget.TextView
 import android.widget.Toast
@@ -30,9 +31,9 @@ class MainActivity : Activity() {
 
     private lateinit var library: Library
     private lateinit var categoryList: ListView
-    private lateinit var videoList: ListView
+    private lateinit var videoGrid: GridView
     private lateinit var emptyText: TextView
-    private lateinit var videoAdapter: VideoListAdapter
+    private lateinit var videoAdapter: VideoGridAdapter
 
     private val categories = mutableListOf<CategoryRow>()
     private var currentScope: LibraryScope = LibraryScope.All
@@ -47,21 +48,21 @@ class MainActivity : Activity() {
         setContentView(R.layout.activity_main)
 
         categoryList = findViewById(R.id.category_list)
-        videoList = findViewById(R.id.video_list)
+        videoGrid = findViewById(R.id.video_grid)
         emptyText = findViewById(R.id.empty_text)
 
         // 毛玻璃 UI：壁纸 + 分类面板真磨砂
         GlassBackground.install(this)
         GlassBackground.frost(this, categoryList, 22f)
 
-        videoAdapter = VideoListAdapter(
-            context = this,
+        videoAdapter = VideoGridAdapter(
+            activity = this,
             isFavorite = { library.isFavorite(it.key) },
             onFavorite = { toggleFavorite(it) },
             onDelete = { confirmDelete(listOf(it)) },
         )
-        videoList.adapter = videoAdapter
-        videoList.setOnItemClickListener { _, _, position, _ ->
+        videoGrid.adapter = videoAdapter
+        videoGrid.setOnItemClickListener { _, _, position, _ ->
             currentEntries.getOrNull(position)?.let { openPlayer(it, position) }
         }
 
@@ -131,7 +132,7 @@ class MainActivity : Activity() {
         currentEntries = library.entriesFor(currentScope)
         videoAdapter.submit(currentEntries)
         emptyText.visibility = if (currentEntries.isEmpty()) android.view.View.VISIBLE else android.view.View.GONE
-        videoList.visibility = if (currentEntries.isEmpty()) android.view.View.GONE else android.view.View.VISIBLE
+        videoGrid.visibility = if (currentEntries.isEmpty()) android.view.View.GONE else android.view.View.VISIBLE
     }
 
     // ---------- 操作 ----------

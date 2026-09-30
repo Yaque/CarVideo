@@ -3,6 +3,7 @@ package com.aiocw.myapplication.shared.data
 import android.content.Context
 import android.content.SharedPreferences
 import com.aiocw.myapplication.shared.model.DecodeMode
+import com.aiocw.myapplication.shared.model.DisplayMode
 import com.aiocw.myapplication.shared.model.PlaybackMode
 
 /**
@@ -19,6 +20,12 @@ class SettingsRepository(context: Context) {
         get() = runCatching { DecodeMode.valueOf(sp.getString(KEY_DECODE_MODE, DecodeMode.AUTO.name)!!) }
             .getOrDefault(DecodeMode.AUTO)
         set(value) = sp.edit().putString(KEY_DECODE_MODE, value.name).apply()
+
+    /** 画面适配：适应（默认，不变形）/ 充满（裁剪）/ 拉伸 */
+    var displayMode: DisplayMode
+        get() = runCatching { DisplayMode.valueOf(sp.getString(KEY_DISPLAY_MODE, DisplayMode.FIT.name)!!) }
+            .getOrDefault(DisplayMode.FIT)
+        set(value) = sp.edit().putString(KEY_DISPLAY_MODE, value.name).apply()
 
     /** 默认播放模式（进入播放页时应用） */
     var defaultPlaybackMode: PlaybackMode
@@ -57,6 +64,7 @@ class SettingsRepository(context: Context) {
 
     companion object {
         private const val KEY_DECODE_MODE = "decode_mode"
+        private const val KEY_DISPLAY_MODE = "display_mode"
         private const val KEY_PLAY_MODE = "default_play_mode"
         private const val KEY_REMEMBER_MODE = "remember_play_mode"
         private const val KEY_LAST_MODE = "last_play_mode"

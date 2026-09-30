@@ -1,24 +1,34 @@
 package com.aiocw.myapplication.ui
 
-import android.content.Context
+import android.app.Activity
+import android.graphics.Bitmap
+import android.util.LruCache
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
 import com.aiocw.myapplication.R
 import com.aiocw.myapplication.shared.model.VideoEntry
+import com.aiocw.myapplication.shared.util.VideoMetadata
+import java.util.concurrent.Executors
 
-/** 视频列表适配器（分类管理页 / 播放页共用样式）。 */
-class VideoListAdapter(
-    private val context: Context,
+/**
+ * 视频卡片网格适配器（模块化封面显示）。
+ * 封面缩略图异步提取（MediaMetadataRetriever + 磁盘缓存 + 内存 LruCache），滚动不卡顿。
+ */
+class VideoGridAdapter(
+    private val activity: Activity,
     private val isFavorite: (VideoEntry) -> Boolean,
     private val onFavorite: (VideoEntry) -> Unit,
     private val onDelete: (VideoEntry) -> Unit,
 ) : BaseAdapter() {
 
     private val items = mutableListOf<VideoEntry>()
+    private val executor = Executors.newFixedThreadPool(2)
+    private val thumbCache = object : LruCache<String, Bitmap>(48) {}
 
     fun submit(list: List<VideoEntry>) {
         items.clear()
@@ -31,17 +41,36 @@ class VideoListAdapter(
     override fun getItemId(position: Int): Long = position.toLong()
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-        val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.item_video, parent, false)
+        val view = convertView ?: LayoutInflater.from(activity).inflate(R.layout.item_video_grid, parent, false)
         val entry = items[position]
 
         view.findViewById<TextView>(R.id.text_title).text = entry.title
         view.findViewById<TextView>(R.id.text_meta).text =
-            "${entry.category} · ${formatSize(entry.sizeBytes)} · ${entry.fileName}"
+            "${entry.category} · ${formatSize(entry.sizeBytes)}"
 
         val favButton = view.findViewById<Button>(R.id.btn_favorite)
         favButton.text = if (isFavorite(entry)) "★" else "☆"
         favButton.setOnClickListener { onFavorite(entry) }
         view.findViewById<Button>(R.id.btn_delete).setOnClickListener { onDelete(entry) }
+
+        val img = view.findViewById<ImageView>(R.id.img_thumb)
+        val cached = thumbCache.get(entry.key)
+        if (cached != null) {
+            img.tag = null
+            img.setImageBitmap(cached)
+        } else {
+            img.setImageResource(R.drawable.thumb_placeholder)
+            img.tag = entry.key
+            executor.execute {
+                val bmp = VideoMetadata.getThumbnail(activity, entry.path, 480)
+                if (bmp != null) thumbCache.put(entry.key, bmp)
+                activity.runOnUiThread {
+                    if (img.tag == entry.key) {
+                        img.setImageBitmap(bmp)   // bmp 为 null 时保持占位图
+                    }
+                }
+            }
+        }
         return view
     }
 

@@ -1,50 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 抖音式沉浸播放页：全屏视频 + 极简信息 -->
+<!-- 抖音式沉浸播放页：全屏视频（默认适应不变形）+ 右上角悬浮设置按钮 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000000">
 
-    <androidx.media3.ui.PlayerView
-        android:id="@+id/player_view"
+    <!-- 可整体滑动动画的内容层 -->
+    <FrameLayout
+        android:id="@+id/content"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:resize_mode="zoom"
-        app:show_buffering="when_playing"
-        app:surface_type="surface_view"
-        app:use_controller="false" />
+        android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/text_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top"
-        android:ellipsize="end"
-        android:paddingStart="20dp"
-        android:paddingTop="18dp"
-        android:paddingEnd="20dp"
-        android:singleLine="true"
-        android:shadowColor="#88000000"
-        android:shadowRadius="10"
+        <androidx.media3.ui.PlayerView
+            android:id="@+id/player_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:resize_mode="fit"
+            app:show_buffering="when_playing"
+            app:surface_type="surface_view"
+            app:use_controller="false" />
+
+        <TextView
+            android:id="@+id/text_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:ellipsize="end"
+            android:paddingStart="20dp"
+            android:paddingTop="18dp"
+            android:paddingEnd="90dp"
+            android:singleLine="true"
+            android:shadowColor="#88000000"
+            android:shadowRadius="10"
+            android:textColor="#FFFFFF"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/text_hint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginBottom="28dp"
+            android:background="@drawable/glass_item"
+            android:paddingStart="18dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="18dp"
+            android:paddingBottom="8dp"
+            android:shadowColor="#88000000"
+            android:shadowRadius="10"
+            android:text="上滑 / 下滑 切换视频"
+            android:textColor="#E8EEF9"
+            android:textSize="13sp" />
+    </FrameLayout>
+
+    <!-- 右上角悬浮按钮：弹出播放设置（内含"更多"进管理页） -->
+    <Button
+        android:id="@+id/btn_menu"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/glass_button"
+        android:text="⋯"
         android:textColor="#FFFFFF"
-        android:textSize="17sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/text_hint"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="28dp"
-        android:background="@drawable/glass_item"
-        android:paddingStart="18dp"
-        android:paddingTop="8dp"
-        android:paddingEnd="18dp"
-        android:paddingBottom="8dp"
-        android:shadowColor="#88000000"
-        android:shadowRadius="10"
-        android:text="上滑 / 下滑 切换视频 · 点击进入管理"
-        android:textColor="#E8EEF9"
-        android:textSize="13sp" />
+        android:textSize="22sp" />
 </FrameLayout>

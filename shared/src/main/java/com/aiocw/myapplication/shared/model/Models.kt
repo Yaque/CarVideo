@@ -37,6 +37,9 @@ enum class PlaybackMode {
 /** 解码模式。 */
 enum class DecodeMode { AUTO, HARDWARE, SOFTWARE }
 
+/** 画面适配模式（默认 FIT：不拉伸不变形）。 */
+enum class DisplayMode { FIT, FILL, STRETCH }
+
 /** 播放范围：全部 / 收藏 / 指定分类。 */
 sealed class LibraryScope {
     object All : LibraryScope()

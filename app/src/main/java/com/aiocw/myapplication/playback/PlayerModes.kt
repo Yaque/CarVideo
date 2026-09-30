@@ -1,6 +1,8 @@
 package com.aiocw.myapplication.playback
 
 import androidx.media3.common.Player
+import androidx.media3.ui.PlayerView
+import com.aiocw.myapplication.shared.model.DisplayMode
 import com.aiocw.myapplication.shared.model.PlaybackMode
 
 /** 需求播放模式 → Media3 repeat/shuffle 映射（见鉴权分析 §7.3）。 */
@@ -52,5 +54,27 @@ object PlayerModes {
         player.shuffleModeEnabled -> PlaybackMode.LOOP_SHUFFLE
         player.repeatMode == Player.REPEAT_MODE_ALL -> PlaybackMode.LOOP_ALL
         else -> PlaybackMode.OFF
+    }
+}
+
+/** 画面适配模式 ↔ Media3 PlayerView resize mode（默认适应：不拉伸不变形）。 */
+object DisplayModes {
+
+    fun resizeMode(mode: DisplayMode): Int = when (mode) {
+        DisplayMode.FIT -> PlayerView.RESIZE_MODE_FIT      // 适应：完整显示，留黑边，不变形
+        DisplayMode.FILL -> PlayerView.RESIZE_MODE_ZOOM    // 充满：铺满屏幕，裁剪多余部分
+        DisplayMode.STRETCH -> PlayerView.RESIZE_MODE_FILL // 拉伸：铺满但可能变形
+    }
+
+    fun label(mode: DisplayMode): String = when (mode) {
+        DisplayMode.FIT -> "适应（不变形）"
+        DisplayMode.FILL -> "充满（裁剪）"
+        DisplayMode.STRETCH -> "拉伸（全屏）"
+    }
+
+    fun next(mode: DisplayMode): DisplayMode = when (mode) {
+        DisplayMode.FIT -> DisplayMode.FILL
+        DisplayMode.FILL -> DisplayMode.STRETCH
+        DisplayMode.STRETCH -> DisplayMode.FIT
     }
 }

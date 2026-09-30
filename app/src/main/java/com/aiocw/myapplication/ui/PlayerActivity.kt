@@ -16,6 +16,7 @@ import androidx.media3.session.SessionToken
 import androidx.media3.ui.PlayerView
 import com.aiocw.myapplication.App
 import com.aiocw.myapplication.R
+import com.aiocw.myapplication.playback.DisplayModes
 import com.aiocw.myapplication.playback.PlayerModes
 import com.aiocw.myapplication.playback.PlaybackService
 import com.aiocw.myapplication.playback.toMediaItem
@@ -73,6 +74,7 @@ class PlayerActivity : Activity() {
         GlassBackground.install(this)   // 半透明状态栏/导航栏（画面区为黑色）
 
         playerView = findViewById(R.id.player_view)
+        playerView.resizeMode = DisplayModes.resizeMode(library.settings.displayMode)   // 画面适配（默认不变形）
         textTitle = findViewById(R.id.text_title)
         textState = findViewById(R.id.text_state)
         btnPlay = findViewById(R.id.btn_play)

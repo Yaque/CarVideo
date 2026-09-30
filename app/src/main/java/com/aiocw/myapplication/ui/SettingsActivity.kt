@@ -15,6 +15,7 @@ import android.widget.TextView
 import android.widget.Toast
 import com.aiocw.myapplication.App
 import com.aiocw.myapplication.R
+import com.aiocw.myapplication.playback.DisplayModes
 import com.aiocw.myapplication.playback.PlayerModes
 import com.aiocw.myapplication.shared.Library
 import com.aiocw.myapplication.shared.model.DecodeMode
@@ -30,6 +31,7 @@ class SettingsActivity : Activity() {
     private lateinit var textPermission: TextView
     private lateinit var sourceContainer: LinearLayout
     private lateinit var textDecodeMode: TextView
+    private lateinit var textDisplayMode: TextView
     private lateinit var textDefaultMode: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,6 +42,7 @@ class SettingsActivity : Activity() {
         textPermission = findViewById(R.id.text_permission)
         sourceContainer = findViewById(R.id.source_container)
         textDecodeMode = findViewById(R.id.text_decode_mode)
+        textDisplayMode = findViewById(R.id.text_display_mode)
         textDefaultMode = findViewById(R.id.text_default_mode)
 
         // 毛玻璃 UI：壁纸 + 各卡片真磨砂
@@ -53,6 +56,7 @@ class SettingsActivity : Activity() {
         findViewById<Button>(R.id.btn_permission).setOnClickListener { requestPermission() }
         findViewById<Button>(R.id.btn_add_source).setOnClickListener { addSource() }
         findViewById<Button>(R.id.btn_decode_mode).setOnClickListener { cycleDecodeMode() }
+        findViewById<Button>(R.id.btn_display_mode).setOnClickListener { cycleDisplayMode() }
         findViewById<Button>(R.id.btn_default_mode).setOnClickListener { cycleDefaultMode() }
 
         bindSwitch(R.id.switch_scan_on_mount, library.settings.scanOnMount) { library.settings.scanOnMount = it }
@@ -84,6 +88,7 @@ class SettingsActivity : Activity() {
             DecodeMode.HARDWARE -> "强制硬解"
             DecodeMode.SOFTWARE -> "强制软解"
         }
+        textDisplayMode.text = "画面适配：" + DisplayModes.label(library.settings.displayMode)
         textDefaultMode.text = "默认播放模式：" + PlayerModes.label(library.settings.defaultPlaybackMode)
         renderSources()
     }
@@ -194,6 +199,12 @@ class SettingsActivity : Activity() {
         }
         render()
         Toast.makeText(this, "解码模式已切换（下次播放生效）", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun cycleDisplayMode() {
+        library.settings.displayMode = DisplayModes.next(library.settings.displayMode)
+        render()
+        Toast.makeText(this, "画面适配：${DisplayModes.label(library.settings.displayMode)}", Toast.LENGTH_SHORT).show()
     }
 
     private fun cycleDefaultMode() {

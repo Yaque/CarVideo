@@ -218,6 +218,33 @@
                 android:paddingTop="10dp">
 
                 <TextView
+                    android:id="@+id/text_display_mode"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="#C9D2E3"
+                    android:textSize="14sp" />
+
+                <Button
+                    android:id="@+id/btn_display_mode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="44dp"
+                    android:background="@drawable/glass_button"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp"
+                    android:text="切换"
+                    android:textColor="#EDF2FB"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingTop="10dp">
+
+                <TextView
                     android:id="@+id/text_default_mode"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"

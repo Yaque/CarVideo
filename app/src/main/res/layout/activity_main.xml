@@ -76,12 +76,16 @@
             android:layout_height="match_parent"
             android:layout_weight="1">
 
-            <ListView
-                android:id="@+id/video_list"
+            <!-- 封面卡片网格（模块化显示，非列表） -->
+            <GridView
+                android:id="@+id/video_grid"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:divider="@android:color/transparent"
-                android:dividerHeight="10dp"
+                android:columnWidth="@dimen/grid_column_width"
+                android:horizontalSpacing="10dp"
+                android:numColumns="auto_fit"
+                android:stretchMode="columnWidth"
+                android:verticalSpacing="10dp"
                 android:clipToPadding="false"
                 android:paddingBottom="10dp" />
 

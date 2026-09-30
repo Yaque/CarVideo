@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 手机竖屏：分类面板收窄，给视频列表留空间 -->
+    <!-- 手机竖屏：分类面板收窄，给视频网格留空间 -->
     <dimen name="category_panel_width">140dp</dimen>
+    <dimen name="grid_column_width">150dp</dimen>
+    <dimen name="thumb_height">88dp</dimen>
 </resources>

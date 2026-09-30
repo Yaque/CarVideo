@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 车机/大屏（sw ≥ 600dp（1024x600 车机也命中））：分类面板加宽 -->
+    <!-- 车机/大屏（sw ≥ 600dp，1024x600 车机也命中） -->
     <dimen name="category_panel_width">230dp</dimen>
+    <dimen name="grid_column_width">210dp</dimen>
+    <dimen name="thumb_height">128dp</dimen>
 </resources>
