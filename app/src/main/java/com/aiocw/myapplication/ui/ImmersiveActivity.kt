@@ -9,7 +9,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsController
-import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.ListView
 import android.widget.TextView
@@ -58,8 +57,7 @@ class ImmersiveActivity : Activity() {
     private lateinit var drawer: View
     private lateinit var playlistList: ListView
     private lateinit var textPlaylistInfo: TextView
-    private var playlistAdapter: ArrayAdapter<String>? = null
-    private val playlistLabels = mutableListOf<String>()
+    private lateinit var playlistAdapter: PlaylistAdapter
 
     private var controller: MediaController? = null
     private var controllerFuture: ListenableFuture<MediaController>? = null
@@ -112,6 +110,7 @@ class ImmersiveActivity : Activity() {
         category = intent.getStringExtra(EXTRA_CATEGORY)
         startKey = intent.getStringExtra(EXTRA_START_KEY)
         startIndex = intent.getIntExtra(EXTRA_START_INDEX, 0)
+        // 注：singleTask 下重复进入走 onNewIntent，那里同样要解析参数（否则会继续播旧内容）
 
         playerView.resizeMode = DisplayModes.resizeMode(library.settings.displayMode)
 
@@ -160,10 +159,10 @@ class ImmersiveActivity : Activity() {
                 if (c.mediaItemCount == 0) {
                     buildAndPlay(c)
                 } else {
-                    // 服务已有播放列表（返回本页）：确保继续播
+                    // 服务已有播放列表：确保继续播；若带指定条目（管理页点击）则跳过去
                     if (c.playbackState == Player.STATE_IDLE) c.prepare()
                     if (!c.isPlaying) c.play()
-                    refreshChrome()
+                    if (startKey != null) jumpOrRebuild(c) else refreshChrome()
                 }
             }.onFailure {
                 textHint.text = "播放服务连接失败"
@@ -211,6 +210,50 @@ class ImmersiveActivity : Activity() {
         else -> library.entriesFor(LibraryScope.All)
     }
 
+    /**
+     * singleTask 复用时新 Intent 到达（管理页点击另一个视频）：
+     * 必须切到新指定的条目/范围，否则会继续播旧内容。
+     */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        applyIntent(intent)
+        controller?.let { jumpOrRebuild(it) }
+    }
+
+    private fun applyIntent(intent: Intent?) {
+        if (intent == null) return
+        fromLaunch = intent.getStringExtra(EXTRA_START_KEY) == null
+        scopeType = intent.getStringExtra(EXTRA_SCOPE_TYPE) ?: PlaybackService.SCOPE_ALL
+        category = intent.getStringExtra(EXTRA_CATEGORY)
+        startKey = intent.getStringExtra(EXTRA_START_KEY)
+        startIndex = intent.getIntExtra(EXTRA_START_INDEX, 0)
+    }
+
+    /** 有指定条目：当前列表里有就跳过去，没有（范围变了）就重建列表。 */
+    private fun jumpOrRebuild(c: MediaController) {
+        val key = startKey
+        if (key == null) {
+            buildAndPlay(c)
+            return
+        }
+        val idx = indexOfKey(c, key)
+        if (idx >= 0) {
+            if (c.playbackState == Player.STATE_IDLE) c.prepare()
+            c.seekTo(idx, if (library.settings.resumePlayback) library.getProgress(key) else 0L)
+            if (!c.isPlaying) c.play()
+            refreshChrome()
+        } else {
+            buildAndPlay(c)
+        }
+    }
+
+    private fun indexOfKey(c: MediaController, key: String): Int {
+        for (i in 0 until c.mediaItemCount) {
+            if (c.getMediaItemAt(i)?.mediaId == key) return i
+        }
+        return -1
+    }
+
     private fun currentMode(): PlaybackMode =
         if (library.settings.rememberPlaybackMode) library.settings.lastPlaybackMode
         else library.settings.defaultPlaybackMode
@@ -226,17 +269,29 @@ class ImmersiveActivity : Activity() {
 
     private fun refreshPlaylistUi() {
         val c = controller ?: return
-        playlistLabels.clear()
-        for (i in 0 until c.mediaItemCount) {
-            val title = c.getMediaItemAt(i)?.mediaMetadata?.title?.toString() ?: "视频 ${i + 1}"
-            playlistLabels += if (i == c.currentMediaItemIndex) "▶ $title" else "　$title"
-        }
-        playlistAdapter?.notifyDataSetChanged()
-            ?: run {
-                playlistAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, playlistLabels)
-                playlistList.adapter = playlistAdapter
+        // 播放列表与播放器条目对齐（服务复用/删除后重建条目快照）
+        if (entries.size != c.mediaItemCount) {
+            entries = (0 until c.mediaItemCount).map { i ->
+                val key = c.getMediaItemAt(i)?.mediaId ?: ""
+                entries.firstOrNull { it.key == key }
+                    ?: keyToEntry(key, c.getMediaItemAt(i)?.mediaMetadata?.title?.toString())
             }
+        }
+        playlistAdapter.update(entries, c.currentMediaItemIndex)
         textPlaylistInfo.text = "共 ${c.mediaItemCount} 个 · 当前范围：${scopeLabel()}"
+    }
+
+    private fun keyToEntry(key: String, title: String?): VideoEntry {
+        val path = key.substringAfter('|', missingDelimiterValue = "")
+        return VideoEntry(
+            key = key,
+            path = path,
+            volumeUuid = key.substringBefore('|').takeIf { it != "local" },
+            category = File(path).parentFile?.name ?: "",
+            title = title ?: File(path).nameWithoutExtension,
+            sizeBytes = if (path.isBlank()) 0 else File(path).length(),
+            lastModified = if (path.isBlank()) 0 else File(path).lastModified(),
+        )
     }
 
     private fun scopeLabel(): String = when (scopeType) {
@@ -266,6 +321,7 @@ class ImmersiveActivity : Activity() {
     private fun setupActions() {
         btnFavorite.setOnClickListener { toggleFavorite() }
         findViewById<Button>(R.id.btn_menu).setOnClickListener { showMenu() }
+        findViewById<Button>(R.id.btn_playlist).setOnClickListener { openDrawer() }
     }
 
     private fun toggleFavorite() {
@@ -348,6 +404,8 @@ class ImmersiveActivity : Activity() {
     // ---------- 播放列表抽屉（右滑进入） ----------
 
     private fun setupDrawer() {
+        playlistAdapter = PlaylistAdapter()
+        playlistList.adapter = playlistAdapter
         playlistList.setOnItemClickListener { _, _, position, _ ->
             controller?.seekTo(position, 0L)
             refreshChrome()
