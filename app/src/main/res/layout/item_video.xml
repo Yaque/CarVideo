@@ -4,9 +4,9 @@
     android:layout_height="wrap_content"
     android:background="@drawable/glass_item"
     android:gravity="center_vertical"
-    android:minHeight="76dp"
+    android:minHeight="68dp"
     android:orientation="horizontal"
-    android:padding="14dp">
+    android:padding="10dp">
 
     <LinearLayout
         android:layout_width="0dp"
@@ -21,7 +21,7 @@
             android:ellipsize="end"
             android:singleLine="true"
             android:textColor="#FFFFFF"
-            android:textSize="17sp"
+            android:textSize="15sp"
             android:textStyle="bold" />
 
         <TextView
@@ -38,22 +38,26 @@
     <Button
         android:id="@+id/btn_favorite"
         android:layout_width="wrap_content"
-        android:layout_height="42dp"
-        android:layout_marginStart="8dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="6dp"
         android:background="@drawable/glass_button"
-        android:minWidth="56dp"
+        android:minWidth="44dp"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
         android:text="☆"
         android:textColor="#FFD479"
-        android:textSize="17sp" />
+        android:textSize="15sp" />
 
     <Button
         android:id="@+id/btn_delete"
         android:layout_width="wrap_content"
-        android:layout_height="42dp"
-        android:layout_marginStart="8dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="6dp"
         android:background="@drawable/glass_button"
-        android:minWidth="56dp"
+        android:minWidth="46dp"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
         android:text="删除"
         android:textColor="#FF9E9E"
-        android:textSize="14sp" />
+        android:textSize="12sp" />
 </LinearLayout>
