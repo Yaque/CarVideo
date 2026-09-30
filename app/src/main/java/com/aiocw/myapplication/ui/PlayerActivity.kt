@@ -121,14 +121,14 @@ class PlayerActivity : Activity() {
             val targetKey = startKey
             if (targetKey != null) {
                 for (i in 0 until c.mediaItemCount) {
-                    if (c.getMediaItemAt(i).mediaId == targetKey) {
+                    if (c.getMediaItemAt(i)?.mediaId == targetKey) {
                         idx = i
                         break
                     }
                 }
             }
             if (idx >= 0 && idx != c.currentMediaItemIndex) {
-                c.seekTo(idx, library.getProgress(c.getMediaItemAt(idx).mediaId))
+                c.seekTo(idx, library.getProgress(c.getMediaItemAt(idx)?.mediaId ?: ""))
             }
             PlayerModes.apply(c, mode)
             refreshNowPlaying()

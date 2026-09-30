@@ -38,6 +38,7 @@ class MainActivity : Activity() {
     private var currentEntries: List<VideoEntry> = emptyList()
 
     private val libraryListener: () -> Unit = { runOnUiThread { render() } }
+    private var lastAutoScanAt = 0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,6 +84,12 @@ class MainActivity : Activity() {
         super.onStart()
         ensurePermission()
         render()
+        // 兑底：即使热插拔广播被 ROM 吞掉，打开页面也保证数据是新的（5s 节流）
+        val now = System.currentTimeMillis()
+        if (now - lastAutoScanAt > 5_000) {
+            lastAutoScanAt = now
+            Thread { library.refresh() }.start()
+        }
     }
 
     // ---------- 权限门（鉴权分析 §3.2） ----------
