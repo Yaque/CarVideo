@@ -23,18 +23,19 @@
 
         <TextView
             android:id="@+id/text_title"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="top"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginBottom="58dp"
             android:ellipsize="end"
-            android:paddingStart="88dp"
-            android:paddingTop="18dp"
-            android:paddingEnd="88dp"
+            android:maxWidth="80%"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
             android:singleLine="true"
             android:shadowColor="#88000000"
             android:shadowRadius="10"
             android:textColor="#FFFFFF"
-            android:textSize="17sp"
+            android:textSize="15sp"
             android:textStyle="bold" />
 
         <TextView
@@ -42,7 +43,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|center_horizontal"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="100dp"
             android:background="@drawable/glass_item"
             android:paddingStart="18dp"
             android:paddingTop="8dp"
@@ -50,9 +51,34 @@
             android:paddingBottom="8dp"
             android:shadowColor="#88000000"
             android:shadowRadius="10"
-            android:text="上滑 / 下滑 切换 · 右滑 播放列表 · 轻点 隐藏界面"
+            android:text="上滑/下滑 切换 · 右滑 播放列表 · 单击 暂停/继续"
             android:textColor="#E8EEF9"
             android:textSize="13sp" />
+
+        <!-- 底部进度条（可拖动定位） -->
+        <SeekBar
+            android:id="@+id/seek_progress"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_gravity="bottom"
+            android:layout_marginStart="88dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="8dp"
+            android:progressTint="#8FB8FF"
+            android:thumbTint="#FFFFFF" />
+
+        <!-- 单击暂停时的中央图标（抖音式） -->
+        <TextView
+            android:id="@+id/text_pause"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:shadowColor="#99000000"
+            android:shadowRadius="14"
+            android:text="▶"
+            android:textColor="#CCFFFFFF"
+            android:textSize="96sp"
+            android:visibility="gone" />
     </FrameLayout>
 
     <!-- 左上：收藏（抖音式直接在页面上） -->

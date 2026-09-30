@@ -5,12 +5,15 @@ import android.app.AlertDialog
 import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.widget.Button
 import android.widget.ListView
+import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -53,6 +56,8 @@ class ImmersiveActivity : Activity() {
     private lateinit var textTitle: TextView
     private lateinit var textHint: TextView
     private lateinit var btnFavorite: Button
+    private lateinit var seekBar: SeekBar
+    private lateinit var textPause: TextView
 
     private lateinit var drawer: View
     private lateinit var playlistList: ListView
@@ -70,8 +75,24 @@ class ImmersiveActivity : Activity() {
     private var fromLaunch = false       // 启动进入 = 随机播放
     private var switching = false
     private var drawerOpen = false
+    private var seekDragging = false
 
     private val hideHintRunnable = Runnable { textHint.visibility = View.GONE }
+    private val progressHandler = Handler(Looper.getMainLooper())
+
+    /** 进度条周期刷新（秒级粒度，避免 duration 未就绪时的异常值）。 */
+    private val progressTick = object : Runnable {
+        override fun run() {
+            val c = controller
+            if (c != null && !seekDragging) {
+                val durSec = (c.duration.coerceAtLeast(0L) / 1000).toInt()
+                val posSec = (c.currentPosition.coerceAtLeast(0L) / 1000).toInt()
+                seekBar.max = durSec
+                seekBar.progress = posSec.coerceAtMost(durSec)
+            }
+            progressHandler.postDelayed(this, 500)
+        }
+    }
 
     // 手势判定（纯事件计算）
     private var downY = 0f
@@ -83,7 +104,9 @@ class ImmersiveActivity : Activity() {
         override fun onIsPlayingChanged(isPlaying: Boolean) = refreshChrome()
         override fun onPlaybackStateChanged(playbackState: Int) = refreshChrome()
         override fun onPlayerError(error: PlaybackException) {
+            // 错误提示短暂显示后同样自动收起
             textHint.text = "播放失败（错误码 ${error.errorCode}），已跳到下一个"
+            scheduleHintHide()
             Toast.makeText(this@ImmersiveActivity, "播放失败：${error.message}", Toast.LENGTH_LONG).show()
             controller?.seekToNextMediaItem()   // 坏文件：跳下一个继续
         }
@@ -100,6 +123,8 @@ class ImmersiveActivity : Activity() {
         textTitle = findViewById(R.id.text_title)
         textHint = findViewById(R.id.text_hint)
         btnFavorite = findViewById(R.id.btn_favorite)
+        seekBar = findViewById(R.id.seek_progress)
+        textPause = findViewById(R.id.text_pause)
         drawer = findViewById(R.id.drawer)
         playlistList = findViewById(R.id.playlist_list)
         textPlaylistInfo = findViewById(R.id.text_playlist_info)
@@ -117,8 +142,10 @@ class ImmersiveActivity : Activity() {
         setupActions()
         setupGestures()
         setupDrawer()
+        setupSeekBar()
         connectController()
         scheduleHintHide()   // 滑动提示每次打开只显示几秒
+        progressHandler.post(progressTick)
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -127,6 +154,7 @@ class ImmersiveActivity : Activity() {
     }
 
     override fun onDestroy() {
+        progressHandler.removeCallbacks(progressTick)
         textHint.removeCallbacks(hideHintRunnable)
         controller?.removeListener(playerListener)
         playerView.player = null
@@ -258,12 +286,14 @@ class ImmersiveActivity : Activity() {
         if (library.settings.rememberPlaybackMode) library.settings.lastPlaybackMode
         else library.settings.defaultPlaybackMode
 
-    /** 刷新标题/收藏星标/播放列表高亮。 */
+    /** 刷新文件名/收藏星标/暂停图标/播放列表高亮。 */
     private fun refreshChrome() {
         val c = controller ?: return
         val entry = currentEntry()
-        textTitle.text = c.currentMediaItem?.mediaMetadata?.title ?: ""
+        // 文件名显示在底部居中
+        textTitle.text = entry?.fileName ?: c.currentMediaItem?.mediaMetadata?.title ?: ""
         btnFavorite.text = if (entry != null && library.isFavorite(entry.key)) "★" else "☆"
+        textPause.visibility = if (c.isPlaying) View.GONE else View.VISIBLE
         refreshPlaylistUi()
     }
 
@@ -480,7 +510,7 @@ class ImmersiveActivity : Activity() {
                             if (dx > 0) openDrawer() else closeDrawer()
                         abs(dy) > threshold && abs(dy) >= abs(dx) -> animateSwitch(next = dy < 0)
                         abs(dx) < threshold && abs(dy) < threshold && dt < 400 ->
-                            if (drawerOpen) closeDrawer() else toggleChrome()
+                            if (drawerOpen) closeDrawer() else togglePlayPause()
                     }
                     true
                 }
@@ -513,12 +543,30 @@ class ImmersiveActivity : Activity() {
             .start()
     }
 
-    private fun toggleChrome() {
-        val visible = textTitle.visibility == View.VISIBLE
-        val v = if (visible) View.GONE else View.VISIBLE
-        textTitle.visibility = v
-        textHint.visibility = v
-        if (!visible) scheduleHintHide()   // 重新显示时同样几秒后自动收起提示
+    /** 单击：暂停 / 继续（抖音式），中央显示大 ▶ 图标。 */
+    private fun togglePlayPause() {
+        val c = controller ?: return
+        if (c.isPlaying) {
+            c.pause()
+        } else {
+            if (c.playbackState == Player.STATE_IDLE) c.prepare()
+            c.play()
+        }
+    }
+
+    /** 底部进度条：周期刷新 + 拖动定位。 */
+    private fun setupSeekBar() {
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(sb: SeekBar?, progress: Int, fromUser: Boolean) = Unit
+            override fun onStartTrackingTouch(sb: SeekBar?) {
+                seekDragging = true
+            }
+            override fun onStopTrackingTouch(sb: SeekBar?) {
+                seekDragging = false
+                val p = sb?.progress ?: return
+                controller?.seekTo(p * 1000L)
+            }
+        })
     }
 
     /** 滑动提示：显示几秒后自动隐藏。 */
