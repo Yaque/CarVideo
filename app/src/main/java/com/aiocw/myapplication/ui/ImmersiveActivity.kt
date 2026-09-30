@@ -73,6 +73,8 @@ class ImmersiveActivity : Activity() {
     private var switching = false
     private var drawerOpen = false
 
+    private val hideHintRunnable = Runnable { textHint.visibility = View.GONE }
+
     // 手势判定（纯事件计算）
     private var downY = 0f
     private var downX = 0f
@@ -117,6 +119,7 @@ class ImmersiveActivity : Activity() {
         setupGestures()
         setupDrawer()
         connectController()
+        scheduleHintHide()   // 滑动提示每次打开只显示几秒
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -125,6 +128,7 @@ class ImmersiveActivity : Activity() {
     }
 
     override fun onDestroy() {
+        textHint.removeCallbacks(hideHintRunnable)
         controller?.removeListener(playerListener)
         playerView.player = null
         controllerFuture?.let { MediaController.releaseFuture(it) }
@@ -320,10 +324,10 @@ class ImmersiveActivity : Activity() {
             .setTitle("删除视频")
             .setMessage("确定删除「${entry.fileName}」？此操作不可恢复。")
             .setPositiveButton("删除") { _, _ ->
-                with(controller) {
-                    val index = this?.currentMediaItemIndex ?: -1
-                    if (index >= 0 && index < (this?.mediaItemCount ?: 0)) this.removeMediaItem(index)
-                }
+                // 先从播放列表移除，再删物理文件
+                val c = controller
+                val index = c?.currentMediaItemIndex ?: -1
+                if (c != null && index >= 0 && index < c.mediaItemCount) c.removeMediaItem(index)
                 Thread {
                     library.access.delete(File(entry.path))
                     library.store.removeFavorite(entry.key)
@@ -456,6 +460,14 @@ class ImmersiveActivity : Activity() {
         val v = if (visible) View.GONE else View.VISIBLE
         textTitle.visibility = v
         textHint.visibility = v
+        if (!visible) scheduleHintHide()   // 重新显示时同样几秒后自动收起提示
+    }
+
+    /** 滑动提示：显示几秒后自动隐藏。 */
+    private fun scheduleHintHide() {
+        textHint.removeCallbacks(hideHintRunnable)
+        textHint.visibility = View.VISIBLE
+        textHint.postDelayed(hideHintRunnable, HINT_SHOW_MS)
     }
 
     // ---------- 工具 ----------
@@ -484,5 +496,6 @@ class ImmersiveActivity : Activity() {
 
         private const val ANIM_MS = 220L
         private const val DRAWER_ANIM_MS = 200L
+        private const val HINT_SHOW_MS = 4_000L
     }
 }
