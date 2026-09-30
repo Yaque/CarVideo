@@ -1,7 +1,7 @@
 package com.aiocw.myapplication.playback
 
 import androidx.media3.common.Player
-import androidx.media3.ui.PlayerView
+import androidx.media3.ui.AspectRatioFrameLayout
 import com.aiocw.myapplication.shared.model.DisplayMode
 import com.aiocw.myapplication.shared.model.PlaybackMode
 
@@ -61,9 +61,10 @@ object PlayerModes {
 object DisplayModes {
 
     fun resizeMode(mode: DisplayMode): Int = when (mode) {
-        DisplayMode.FIT -> PlayerView.RESIZE_MODE_FIT      // 适应：完整显示，留黑边，不变形
-        DisplayMode.FILL -> PlayerView.RESIZE_MODE_ZOOM    // 充满：铺满屏幕，裁剪多余部分
-        DisplayMode.STRETCH -> PlayerView.RESIZE_MODE_FILL // 拉伸：铺满但可能变形
+        // RESIZE_MODE_* 常量定义在 AspectRatioFrameLayout（PlayerView.resizeMode 使用同一套值）
+        DisplayMode.FIT -> AspectRatioFrameLayout.RESIZE_MODE_FIT      // 适应：完整显示，留黑边，不变形
+        DisplayMode.FILL -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM    // 充满：铺满屏幕，裁剪多余部分
+        DisplayMode.STRETCH -> AspectRatioFrameLayout.RESIZE_MODE_FILL // 拉伸：铺满但可能变形
     }
 
     fun label(mode: DisplayMode): String = when (mode) {
