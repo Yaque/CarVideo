@@ -8,6 +8,7 @@ import android.os.SystemClock
 import com.aiocw.myapplication.App
 import com.aiocw.myapplication.playback.PlaybackService
 import com.aiocw.myapplication.shared.model.LibraryScope
+import com.aiocw.myapplication.shared.model.PlaybackMode
 import com.aiocw.myapplication.ui.ImmersiveActivity
 
 /**
@@ -50,7 +51,10 @@ class MediaMountReceiver : BroadcastReceiver() {
             )
         }.onFailure {
             runCatching {
-                val play = PlaybackService.playIntent(context, LibraryScope.All)
+                // 自动播放（随机）：显式传入 LOOP_SHUFFLE，不依赖用户默认模式
+                val play = PlaybackService.playIntent(
+                    context, LibraryScope.All, mode = PlaybackMode.LOOP_SHUFFLE
+                )
                 context.startForegroundService(play)
             }
         }

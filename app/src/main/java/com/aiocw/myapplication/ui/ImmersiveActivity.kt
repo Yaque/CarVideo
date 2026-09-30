@@ -145,12 +145,21 @@ class ImmersiveActivity : Activity() {
         setupSeekBar()
         connectController()
         scheduleHintHide()   // 滑动提示每次打开只显示几秒
-        progressHandler.post(progressTick)
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) enterImmersive()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        progressHandler.post(progressTick)   // 可见时才刷进度条
+    }
+
+    override fun onStop() {
+        progressHandler.removeCallbacks(progressTick)
+        super.onStop()
     }
 
     override fun onDestroy() {
@@ -217,7 +226,8 @@ class ImmersiveActivity : Activity() {
                 entries = list
                 var index = list.indexOfFirst { it.key == startKey }
                 if (index < 0) {
-                    index = if (startKey == null) Random.nextInt(list.size)
+                    // 随机起播仅限启动/自动播放进入；范围切换从头播
+                    index = if (startKey == null && fromLaunch) Random.nextInt(list.size)
                     else startIndex.coerceIn(0, list.lastIndex)
                 }
                 val startPos = if (library.settings.resumePlayback) library.getProgress(list[index].key) else 0L
@@ -241,20 +251,27 @@ class ImmersiveActivity : Activity() {
     /**
      * singleTask 复用时新 Intent 到达（管理页点击另一个视频）：
      * 必须切到新指定的条目/范围，否则会继续播旧内容。
+     * 无目标重入（如点桌面图标返回）则保持当前播放，不重建列表。
      */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        applyIntent(intent)
-        controller?.let { jumpOrRebuild(it) }
+        if (applyIntent(intent)) {
+            controller?.let { jumpOrRebuild(it) }
+        } else {
+            refreshChrome()
+        }
     }
 
-    private fun applyIntent(intent: Intent?) {
-        if (intent == null) return
+    /** 解析起播参数；返回是否携带起播目标（条目或范围）。 */
+    private fun applyIntent(intent: Intent?): Boolean {
+        if (intent == null) return false
+        val hasTarget = intent.getStringExtra(EXTRA_START_KEY) != null || intent.hasExtra(EXTRA_SCOPE_TYPE)
         fromLaunch = intent.getStringExtra(EXTRA_START_KEY) == null
         scopeType = intent.getStringExtra(EXTRA_SCOPE_TYPE) ?: PlaybackService.SCOPE_ALL
         category = intent.getStringExtra(EXTRA_CATEGORY)
         startKey = intent.getStringExtra(EXTRA_START_KEY)
         startIndex = intent.getIntExtra(EXTRA_START_INDEX, 0)
+        return hasTarget
     }
 
     /** 有指定条目：当前列表里有就跳过去，没有（范围变了）就重建列表。 */
@@ -496,7 +513,7 @@ class ImmersiveActivity : Activity() {
         content.animate().translationX(0f).setDuration(DRAWER_ANIM_MS).start()
     }
 
-    // ---------- 手势：上下切换（带动画）/ 右滑列表 / 轻点隐藏界面 ----------
+    // ---------- 手势：上下切换（带动画）/ 右滑列表 / 单击暂停继续 ----------
 
     private fun setupGestures() {
         playerView.setOnTouchListener { _: View, event: MotionEvent ->

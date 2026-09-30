@@ -10,6 +10,7 @@ import android.os.Handler
 import android.os.Looper
 import androidx.core.app.ServiceCompat
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
@@ -18,6 +19,7 @@ import com.aiocw.myapplication.App
 import com.aiocw.myapplication.R
 import com.aiocw.myapplication.shared.Library
 import com.aiocw.myapplication.shared.model.LibraryScope
+import com.aiocw.myapplication.shared.model.PlaybackMode
 
 /**
  * 播放内核服务：ExoPlayer + MediaSession。
@@ -33,6 +35,7 @@ class PlaybackService : MediaSessionService() {
 
     private var lastKey: String? = null
     private var lastPositionMs: Long = 0L
+    private var consecutiveErrors = 0
 
     private val progressSaver = object : Runnable {
         override fun run() {
@@ -62,11 +65,23 @@ class PlaybackService : MediaSessionService() {
             }
 
             override fun onPlaybackStateChanged(state: Int) {
+                if (state == Player.STATE_READY) consecutiveErrors = 0
                 if (state == Player.STATE_ENDED) {
                     // 顺序播完即停：清除末条进度，下次从头
                     player.currentMediaItem?.mediaId?.let {
                         library.clearProgress(it)
                     }
+                }
+            }
+
+            override fun onPlayerError(error: PlaybackException) {
+                // 后台播放自愈：坏文件/已删文件跳下一个继续；连续失败防死循环
+                consecutiveErrors++
+                if (consecutiveErrors > 3 || player.mediaItemCount <= 1) {
+                    player.currentMediaItem?.mediaId?.let { library.clearProgress(it) }
+                    stopSelf()
+                } else {
+                    player.seekToNextMediaItem()
                 }
             }
         })
@@ -89,12 +104,14 @@ class PlaybackService : MediaSessionService() {
                 SCOPE_CATEGORY -> LibraryScope.Category(intent.getStringExtra(EXTRA_CATEGORY) ?: return START_NOT_STICKY)
                 else -> LibraryScope.All
             }
-            playScope(scope, intent.getIntExtra(EXTRA_INDEX, 0))
+            val modeOverride = intent.getStringExtra(EXTRA_MODE)
+                ?.let { runCatching { PlaybackMode.valueOf(it) }.getOrNull() }
+            playScope(scope, intent.getIntExtra(EXTRA_INDEX, 0), modeOverride)
         }
         return super.onStartCommand(intent, flags, startId)
     }
 
-    private fun playScope(scope: LibraryScope, startIndex: Int) {
+    private fun playScope(scope: LibraryScope, startIndex: Int, modeOverride: PlaybackMode? = null) {
         Thread {
             val items = PlaylistBuilder.build(library, scope)
             mainHandler.post {
@@ -109,7 +126,7 @@ class PlaybackService : MediaSessionService() {
                     library.getProgress(items[index].mediaId).coerceAtLeast(0L)
                 } else 0L
                 player.setMediaItems(items, index, startPos)
-                PlayerModes.apply(player, currentMode())
+                PlayerModes.apply(player, modeOverride ?: currentMode())
                 player.prepare()
                 player.play()
                 // 播放启动后把前台通知切换为 Media3 的媒体通知
@@ -183,6 +200,7 @@ class PlaybackService : MediaSessionService() {
         const val EXTRA_SCOPE = "scope"           // ALL / FAVORITES / CATEGORY
         const val EXTRA_CATEGORY = "category"
         const val EXTRA_INDEX = "index"
+        const val EXTRA_MODE = "mode"             // PlaybackMode 名称（如自动播放强制随机）
 
         const val SCOPE_ALL = "ALL"
         const val SCOPE_FAVORITES = "FAVORITES"
@@ -192,7 +210,12 @@ class PlaybackService : MediaSessionService() {
         private const val PROGRESS_INTERVAL_MS = 5_000L
 
         /** 构造"按范围播放"的 Intent（供 U 盘自动播放 / 外部入口复用）。 */
-        fun playIntent(context: Context, scope: LibraryScope, startIndex: Int = 0): Intent {
+        fun playIntent(
+            context: Context,
+            scope: LibraryScope,
+            startIndex: Int = 0,
+            mode: PlaybackMode? = null,
+        ): Intent {
             val intent = Intent(context, PlaybackService::class.java).setAction(ACTION_PLAY_SCOPE)
             when (scope) {
                 is LibraryScope.All -> intent.putExtra(EXTRA_SCOPE, SCOPE_ALL)
@@ -200,6 +223,7 @@ class PlaybackService : MediaSessionService() {
                 is LibraryScope.Category -> intent.putExtra(EXTRA_SCOPE, SCOPE_CATEGORY)
                     .putExtra(EXTRA_CATEGORY, scope.name)
             }
+            mode?.let { intent.putExtra(EXTRA_MODE, it.name) }
             return intent.putExtra(EXTRA_INDEX, startIndex)
         }
     }
