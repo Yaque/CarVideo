@@ -21,7 +21,6 @@ import com.aiocw.myapplication.R
 import com.aiocw.myapplication.playback.PlaybackService
 import com.aiocw.myapplication.playback.PlayerModes
 import com.aiocw.myapplication.playback.PlaylistBuilder
-import com.aiocw.myapplication.playback.toMediaItem
 import com.aiocw.myapplication.shared.Library
 import com.aiocw.myapplication.shared.model.LibraryScope
 import com.aiocw.myapplication.shared.model.PlaybackMode
@@ -113,8 +112,10 @@ class ImmersiveActivity : Activity() {
                 if (c.mediaItemCount == 0) {
                     startRandomPlay(c)
                 } else {
-                    // 已有播放列表（从主页返回）：保持随机模式继续
+                    // 已有播放列表（服务未释放）：确保继续播（可能是上次残留的暂停/IDLE 状态）
                     PlayerModes.apply(c, PlaybackMode.LOOP_SHUFFLE)
+                    if (c.playbackState == Player.STATE_IDLE) c.prepare()
+                    if (!c.isPlaying) c.play()
                     updateTitle()
                 }
             }.onFailure {

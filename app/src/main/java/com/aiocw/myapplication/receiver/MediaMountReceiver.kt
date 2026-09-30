@@ -22,7 +22,7 @@ import com.aiocw.myapplication.ui.PlayerActivity
 class MediaMountReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (isDuplicate(intent.data?.path)) return
+        if (isDuplicate(intent.action, intent.data?.path)) return
 
         val app = context.applicationContext as? App ?: return
         val library = app.library
@@ -57,13 +57,15 @@ class MediaMountReceiver : BroadcastReceiver() {
     }
 
     companion object {
-        private var lastPath: String? = null
+        private var lastKey: String? = null
         private var lastAtMs: Long = 0L
 
-        private fun isDuplicate(path: String?): Boolean = synchronized(this) {
+        /** 去重键必须含 action：EJECT 与 MOUNTED 同路径间隔极短时不能互相吞掉 */
+        private fun isDuplicate(action: String?, path: String?): Boolean = synchronized(this) {
             val now = SystemClock.uptimeMillis()
-            val dup = path != null && path == lastPath && now - lastAtMs < 3_000
-            lastPath = path
+            val key = "$action|$path"
+            val dup = key == lastKey && now - lastAtMs < 3_000
+            lastKey = key
             lastAtMs = now
             dup
         }

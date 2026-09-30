@@ -139,6 +139,9 @@ class PlayerActivity : Activity() {
             if (idx >= 0 && idx != c.currentMediaItemIndex) {
                 c.seekTo(idx, library.getProgress(c.getMediaItemAt(idx)?.mediaId ?: ""))
             }
+            // 关键：列表已存在但播放器可能处于暂停/IDLE（如播完停住），必须确保开始播放
+            if (c.playbackState == Player.STATE_IDLE) c.prepare()
+            c.play()
             PlayerModes.apply(c, mode)
             refreshNowPlaying()
         }

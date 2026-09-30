@@ -50,8 +50,8 @@ class PlaybackService : MediaSessionService() {
 
         player.addListener(object : Player.Listener {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                // 切歌：落盘上一条进度
-                lastKey?.let { library.saveProgress(it, lastPositionMs) }
+                // 切歌：落盘上一条进度（异步，避免主线程 SQLite IO）
+                lastKey?.let { saveProgressAsync(it, lastPositionMs) }
                 lastKey = mediaItem?.mediaId
                 lastPositionMs = 0L
                 captureProgress()
@@ -137,8 +137,13 @@ class PlaybackService : MediaSessionService() {
         if (player.playbackState != Player.STATE_ENDED) {
             lastKey = key
             lastPositionMs = player.currentPosition
-            library.saveProgress(key, player.currentPosition)
+            saveProgressAsync(key, player.currentPosition)
         }
+    }
+
+    /** 进度落盘放后台线程：每 5s 一次，避免主线程磁盘 IO（ANR/卡顿风险）。 */
+    private fun saveProgressAsync(key: String, positionMs: Long) {
+        Thread { library.saveProgress(key, positionMs) }.start()
     }
 
     private fun stopPlaybackAndExit() {
@@ -163,6 +168,7 @@ class PlaybackService : MediaSessionService() {
     override fun onDestroy() {
         mainHandler.removeCallbacks(progressSaver)
         captureProgress()
+        // 销毁前同步落盘一次（进程可能被回收，异步来不及）
         lastKey?.let { library.saveProgress(it, lastPositionMs) }
         mediaSession?.run {
             player.release()
