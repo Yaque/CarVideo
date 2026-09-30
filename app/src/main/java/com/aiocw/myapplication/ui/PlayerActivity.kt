@@ -22,6 +22,7 @@ import com.aiocw.myapplication.shared.Library
 import com.aiocw.myapplication.shared.model.LibraryScope
 import com.aiocw.myapplication.shared.model.PlaybackMode
 import com.aiocw.myapplication.shared.model.VideoEntry
+import com.aiocw.myapplication.ui.glass.GlassBackground
 import com.google.common.util.concurrent.ListenableFuture
 import java.io.File
 
@@ -62,6 +63,7 @@ class PlayerActivity : Activity() {
         super.onCreate(savedInstanceState)
         library = (application as App).library
         setContentView(R.layout.activity_player)
+        GlassBackground.install(this)   // 半透明状态栏/导航栏（画面区为黑色）
 
         playerView = findViewById(R.id.player_view)
         textTitle = findViewById(R.id.text_title)

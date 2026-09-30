@@ -17,6 +17,7 @@ import com.aiocw.myapplication.playback.PlaybackService
 import com.aiocw.myapplication.shared.Library
 import com.aiocw.myapplication.shared.model.LibraryScope
 import com.aiocw.myapplication.shared.model.VideoEntry
+import com.aiocw.myapplication.ui.glass.GlassBackground
 import java.io.File
 
 /**
@@ -48,6 +49,10 @@ class MainActivity : Activity() {
         categoryList = findViewById(R.id.category_list)
         videoList = findViewById(R.id.video_list)
         emptyText = findViewById(R.id.empty_text)
+
+        // 毛玻璃 UI：壁纸 + 分类面板真磨砂
+        GlassBackground.install(this)
+        GlassBackground.frost(this, categoryList, 22f)
 
         videoAdapter = VideoListAdapter(
             context = this,

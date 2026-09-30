@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 列表条目玻璃卡片（半径略小、填充略薄） -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="270"
+        android:startColor="#24FFFFFF"
+        android:endColor="#0AFFFFFF" />
+    <stroke
+        android:width="1dp"
+        android:color="#26FFFFFF" />
+    <corners android:radius="18dp" />
+</shape>

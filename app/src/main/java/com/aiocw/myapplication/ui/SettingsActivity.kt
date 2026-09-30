@@ -19,6 +19,7 @@ import com.aiocw.myapplication.playback.PlayerModes
 import com.aiocw.myapplication.shared.Library
 import com.aiocw.myapplication.shared.model.DecodeMode
 import com.aiocw.myapplication.shared.model.VideoSource
+import com.aiocw.myapplication.ui.glass.GlassBackground
 
 /**
  * 设置页：存储权限 / 视频源（含 U 盘）/ 扫描与自动播放 / 解码模式 / 播放默认值。
@@ -41,6 +42,14 @@ class SettingsActivity : Activity() {
         textDecodeMode = findViewById(R.id.text_decode_mode)
         textDefaultMode = findViewById(R.id.text_default_mode)
 
+        // 毛玻璃 UI：壁纸 + 各卡片真磨砂
+        GlassBackground.install(this)
+        GlassBackground.frost(this, findViewById(R.id.card_permission), 22f)
+        GlassBackground.frost(this, findViewById(R.id.card_sources), 22f)
+        GlassBackground.frost(this, findViewById(R.id.card_decode), 22f)
+        GlassBackground.frost(this, findViewById(R.id.card_play), 22f)
+
+        findViewById<Button>(R.id.btn_back).setOnClickListener { finish() }
         findViewById<Button>(R.id.btn_permission).setOnClickListener { requestPermission() }
         findViewById<Button>(R.id.btn_add_source).setOnClickListener { addSource() }
         findViewById<Button>(R.id.btn_decode_mode).setOnClickListener { cycleDecodeMode() }
@@ -96,10 +105,16 @@ class SettingsActivity : Activity() {
     }
 
     private fun buildSourceRow(source: VideoSource): View {
+        val density = resources.displayMetrics.density
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(0, 4, 0, 4)
+            setBackgroundResource(R.drawable.glass_item)
+            setPadding((12 * density).toInt(), (8 * density).toInt(), (8 * density).toInt(), (8 * density).toInt())
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = (8 * density).toInt() }
         }
         val info = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -108,14 +123,19 @@ class SettingsActivity : Activity() {
         info.addView(TextView(this).apply {
             text = source.displayName + if (source.autoPlayOnMount) "（插入自动播放）" else ""
             textSize = 15f
+            setTextColor(0xFFFFFFFF.toInt())
         })
         info.addView(TextView(this).apply {
             text = source.absolutePath + if (source.volumeUuid != null) "  [卷 ${source.volumeUuid}]" else ""
             textSize = 12f
+            setTextColor(0xFFA9B4C9.toInt())
         })
         row.addView(info)
         row.addView(Button(this).apply {
             text = "移除"
+            setBackgroundResource(R.drawable.glass_button)
+            setTextColor(0xFFFF9E9E.toInt())
+            minWidth = (56 * density).toInt()
             setOnClickListener { confirmRemoveSource(source) }
         })
         return row
