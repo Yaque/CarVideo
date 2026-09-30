@@ -116,9 +116,19 @@ class PlayerActivity : Activity() {
             buildAndPlay(c)
         } else {
             // 服务已在播（如 U 盘自动播放）：仅同步到指定条目
-            val idx = c.mediaItems.indexOfFirst { it.mediaId == startKey }
+            // 注意：Player 接口没有 mediaItems 列表属性，只能用 mediaItemAt(i) 遍历
+            var idx = -1
+            val targetKey = startKey
+            if (targetKey != null) {
+                for (i in 0 until c.mediaItemCount) {
+                    if (c.getMediaItemAt(i).mediaId == targetKey) {
+                        idx = i
+                        break
+                    }
+                }
+            }
             if (idx >= 0 && idx != c.currentMediaItemIndex) {
-                c.seekTo(idx, library.getProgress(c.mediaItems[idx].mediaId))
+                c.seekTo(idx, library.getProgress(c.getMediaItemAt(idx).mediaId))
             }
             PlayerModes.apply(c, mode)
             refreshNowPlaying()
