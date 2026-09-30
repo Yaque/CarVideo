@@ -1,3 +1,5 @@
+// 业务/数据层（纯 Android Library，无 UI）。
+// 注意：AGP 9 内置 Kotlin 支持，无需也不应再应用 org.jetbrains.kotlin.android 插件。
 plugins {
     id 'com.android.library'
 }
@@ -6,7 +8,7 @@ android {
     compileSdk 37
 
     defaultConfig {
-        minSdk 29
+        minSdk 30   // 目标车机 Android 11（API 30）
         targetSdk 37
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -17,5 +19,5 @@ android {
     }
 }
 dependencies {
-    implementation libs.androidx.app
+    implementation libs.androidx.core.ktx
 }

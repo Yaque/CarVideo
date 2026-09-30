@@ -22,7 +22,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "My Application"
-include(":mobile")
-include(":automotive")
+rootProject.name = "CarVideoPlayer"
+include(":app")
 include(":shared")
