@@ -9,6 +9,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -57,6 +58,12 @@ class PlayerActivity : Activity() {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) = refreshNowPlaying()
         override fun onIsPlayingChanged(isPlaying: Boolean) = refreshNowPlaying()
         override fun onPlaybackStateChanged(playbackState: Int) = refreshNowPlaying()
+        override fun onPlayerError(error: PlaybackException) {
+            // 播放失败要可见（文件缺失/解码失败等），否则表现为“点了没反应”
+            textState.text = "播放失败（错误码 ${error.errorCode}）：${error.message}"
+            Toast.makeText(this@PlayerActivity, "播放失败：${error.message}", Toast.LENGTH_LONG).show()
+            refreshNowPlaying()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
