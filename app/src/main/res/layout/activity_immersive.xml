@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 抖音式沉浸播放页：全屏视频（默认适应不变形）+ 右上角悬浮设置按钮 -->
+<!-- 统一抖音式播放页：全屏视频 + 右侧收藏/菜单悬浮列 + 右滑播放列表抽屉 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -29,7 +29,7 @@
             android:ellipsize="end"
             android:paddingStart="20dp"
             android:paddingTop="18dp"
-            android:paddingEnd="90dp"
+            android:paddingEnd="80dp"
             android:singleLine="true"
             android:shadowColor="#88000000"
             android:shadowRadius="10"
@@ -42,7 +42,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|center_horizontal"
-            android:layout_marginBottom="28dp"
+            android:layout_marginBottom="24dp"
             android:background="@drawable/glass_item"
             android:paddingStart="18dp"
             android:paddingTop="8dp"
@@ -50,21 +50,131 @@
             android:paddingBottom="8dp"
             android:shadowColor="#88000000"
             android:shadowRadius="10"
-            android:text="上滑 / 下滑 切换视频"
+            android:text="上滑 / 下滑 切换 · 右滑 播放列表 · 轻点 隐藏界面"
             android:textColor="#E8EEF9"
             android:textSize="13sp" />
     </FrameLayout>
 
-    <!-- 右上角悬浮按钮：弹出播放设置（内含"更多"进管理页） -->
-    <Button
-        android:id="@+id/btn_menu"
-        android:layout_width="52dp"
-        android:layout_height="52dp"
-        android:layout_gravity="top|end"
-        android:layout_marginTop="16dp"
+    <!-- 右侧悬浮操作列（抖音风格：收藏直接在页面上） -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|center_vertical"
         android:layout_marginEnd="16dp"
-        android:background="@drawable/glass_button"
-        android:text="⋯"
-        android:textColor="#FFFFFF"
-        android:textSize="22sp" />
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/btn_favorite"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@drawable/glass_button"
+            android:text="☆"
+            android:textColor="#FFD479"
+            android:textSize="24sp" />
+
+        <Button
+            android:id="@+id/btn_menu"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/glass_button"
+            android:text="⋯"
+            android:textColor="#FFFFFF"
+            android:textSize="22sp" />
+    </LinearLayout>
+
+    <!-- 播放列表抽屉（右滑进入） -->
+    <LinearLayout
+        android:id="@+id/drawer"
+        android:layout_width="320dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="@drawable/glass_panel"
+        android:orientation="vertical"
+        android:padding="14dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="播放列表"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btn_close_drawer"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="@drawable/glass_button"
+                android:text="✕"
+                android:textColor="#E8EEF9"
+                android:textSize="15sp" />
+        </LinearLayout>
+
+        <!-- 播放范围选择 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btn_scope_all"
+                android:layout_width="0dp"
+                android:layout_height="42dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/glass_button"
+                android:text="全部"
+                android:textColor="#E8EEF9"
+                android:textSize="13sp" />
+
+            <Button
+                android:id="@+id/btn_scope_fav"
+                android:layout_width="0dp"
+                android:layout_height="42dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/glass_button"
+                android:text="收藏"
+                android:textColor="#FFD479"
+                android:textSize="13sp" />
+
+            <Button
+                android:id="@+id/btn_scope_cat"
+                android:layout_width="0dp"
+                android:layout_height="42dp"
+                android:layout_weight="1"
+                android:background="@drawable/glass_button"
+                android:text="分类…"
+                android:textColor="#B9C9FF"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/text_playlist_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textColor="#A9B4C9"
+            android:textSize="12sp" />
+
+        <ListView
+            android:id="@+id/playlist_list"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="6dp"
+            android:divider="@android:color/transparent"
+            android:dividerHeight="4dp"
+            android:listSelector="@drawable/glass_item_selector" />
+    </LinearLayout>
 </FrameLayout>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 播放设置弹窗（统一玻璃风格）：画面/解码/模式 + 删除 + 入口 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/glass_panel"
+    android:orientation="vertical"
+    android:padding="18dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="播放设置"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/menu_display"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/glass_button"
+        android:text="画面适配"
+        android:textColor="#E8EEF9"
+        android:textSize="14sp" />
+
+    <Button
+        android:id="@+id/menu_decode"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/glass_button"
+        android:text="解码模式"
+        android:textColor="#E8EEF9"
+        android:textSize="14sp" />
+
+    <Button
+        android:id="@+id/menu_mode"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/glass_button"
+        android:text="播放模式"
+        android:textColor="#B9C9FF"
+        android:textSize="14sp" />
+
+    <Button
+        android:id="@+id/menu_delete"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/glass_button"
+        android:text="删除当前视频"
+        android:textColor="#FF9E9E"
+        android:textSize="14sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/menu_more"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/glass_button_accent"
+            android:text="更多：视频管理"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp" />
+
+        <Button
+            android:id="@+id/menu_close"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:background="@drawable/glass_button"
+            android:text="关闭"
+            android:textColor="#E8EEF9"
+            android:textSize="14sp" />
+    </LinearLayout>
+</LinearLayout>

@@ -180,11 +180,12 @@ class MainActivity : Activity() {
     }
 
     private fun openPlayer(entry: VideoEntry, index: Int) {
-        val intent = Intent(this, PlayerActivity::class.java)
-            .putExtra(PlayerActivity.EXTRA_SCOPE_TYPE, scopeTypeName(currentScope))
-            .putExtra(PlayerActivity.EXTRA_CATEGORY, (currentScope as? LibraryScope.Category)?.name)
-            .putExtra(PlayerActivity.EXTRA_START_KEY, entry.key)
-            .putExtra(PlayerActivity.EXTRA_START_INDEX, index)
+        // 统一抖音式播放页：携带范围与起播条目
+        val intent = Intent(this, ImmersiveActivity::class.java)
+            .putExtra(ImmersiveActivity.EXTRA_SCOPE_TYPE, scopeTypeName(currentScope))
+            .putExtra(ImmersiveActivity.EXTRA_CATEGORY, (currentScope as? LibraryScope.Category)?.name)
+            .putExtra(ImmersiveActivity.EXTRA_START_KEY, entry.key)
+            .putExtra(ImmersiveActivity.EXTRA_START_INDEX, index)
         startActivity(intent)
     }
 

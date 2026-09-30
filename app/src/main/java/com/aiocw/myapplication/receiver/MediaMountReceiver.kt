@@ -8,7 +8,7 @@ import android.os.SystemClock
 import com.aiocw.myapplication.App
 import com.aiocw.myapplication.playback.PlaybackService
 import com.aiocw.myapplication.shared.model.LibraryScope
-import com.aiocw.myapplication.ui.PlayerActivity
+import com.aiocw.myapplication.ui.ImmersiveActivity
 
 /**
  * U 盘/存储卡热插拔（见鉴权分析 §5.3）。
@@ -44,8 +44,8 @@ class MediaMountReceiver : BroadcastReceiver() {
     private fun autoPlay(context: Context) {
         runCatching {
             context.startActivity(
-                Intent(context, PlayerActivity::class.java)
-                    .putExtra(PlayerActivity.EXTRA_SCOPE_TYPE, PlaybackService.SCOPE_ALL)
+                Intent(context, ImmersiveActivity::class.java)
+                    .putExtra(ImmersiveActivity.EXTRA_SCOPE_TYPE, PlaybackService.SCOPE_ALL)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             )
         }.onFailure {

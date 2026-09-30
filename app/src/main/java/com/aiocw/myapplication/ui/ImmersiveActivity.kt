@@ -9,10 +9,13 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsController
+import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.ListView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
@@ -24,21 +27,24 @@ import com.aiocw.myapplication.playback.DisplayModes
 import com.aiocw.myapplication.playback.PlaybackService
 import com.aiocw.myapplication.playback.PlayerModes
 import com.aiocw.myapplication.playback.PlaylistBuilder
+import com.aiocw.myapplication.playback.toMediaItem
 import com.aiocw.myapplication.shared.Library
 import com.aiocw.myapplication.shared.model.DecodeMode
-import com.aiocw.myapplication.shared.model.DisplayMode
 import com.aiocw.myapplication.shared.model.LibraryScope
 import com.aiocw.myapplication.shared.model.PlaybackMode
+import com.aiocw.myapplication.shared.model.VideoEntry
 import com.google.common.util.concurrent.ListenableFuture
+import java.io.File
 import kotlin.math.abs
 import kotlin.random.Random
 
 /**
- * 抖音式沉浸启动页：
- * - 打开软件立即全屏随机播放一个视频；画面默认"适应"（不变形），可在设置中切换充满/拉伸；
- * - 上滑 / 下滑：带动画切换下一个 / 上一个随机视频；
- * - 右上角悬浮按钮：弹出播放设置（画面适配/解码/播放模式），其中"更多"进入管理主页；
- * - 库为空时直接进入主页引导配置视频源。
+ * 统一抖音式播放页（启动页 / 管理页点击进入 共用本页）：
+ * - 上滑 / 下滑：带动画切换下一个 / 上一个视频；
+ * - 右滑：打开播放列表抽屉（当前列表 + 播放范围：全部/收藏/分类）；左滑或轻点关闭；
+ * - 右侧悬浮列：收藏（抖音式直接在页面上）+ 菜单（播放设置弹窗：画面适配/解码/播放模式/删除当前视频/更多）；
+ * - 启动进入（无指定视频）：全屏随机播放；从管理页进入：按指定范围与条目起播；
+ * - 画面默认"适应"（不变形），可在弹窗/设置页切换充满/拉伸。
  */
 class ImmersiveActivity : Activity() {
 
@@ -47,24 +53,39 @@ class ImmersiveActivity : Activity() {
     private lateinit var playerView: PlayerView
     private lateinit var textTitle: TextView
     private lateinit var textHint: TextView
+    private lateinit var btnFavorite: Button
+
+    private lateinit var drawer: View
+    private lateinit var playlistList: ListView
+    private lateinit var textPlaylistInfo: TextView
+    private var playlistAdapter: ArrayAdapter<String>? = null
+    private val playlistLabels = mutableListOf<String>()
 
     private var controller: MediaController? = null
     private var controllerFuture: ListenableFuture<MediaController>? = null
 
+    private var entries: List<VideoEntry> = emptyList()
+    private var scopeType: String = PlaybackService.SCOPE_ALL
+    private var category: String? = null
+    private var startKey: String? = null
+    private var startIndex: Int = 0
+    private var fromLaunch = false       // 启动进入 = 随机播放
     private var switching = false
+    private var drawerOpen = false
 
-    // 手势判定（纯事件计算，避开 GestureDetector 重写签名差异）
+    // 手势判定（纯事件计算）
     private var downY = 0f
     private var downX = 0f
     private var downAt = 0L
 
     private val playerListener = object : Player.Listener {
-        override fun onMediaItemTransition(mediaItem: androidx.media3.common.MediaItem?, reason: Int) = updateTitle()
-        override fun onPlaybackStateChanged(playbackState: Int) = updateTitle()
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) = refreshChrome()
+        override fun onIsPlayingChanged(isPlaying: Boolean) = refreshChrome()
+        override fun onPlaybackStateChanged(playbackState: Int) = refreshChrome()
         override fun onPlayerError(error: PlaybackException) {
             textHint.text = "播放失败（错误码 ${error.errorCode}），已跳到下一个"
             Toast.makeText(this@ImmersiveActivity, "播放失败：${error.message}", Toast.LENGTH_LONG).show()
-            controller?.seekToNextMediaItem()   // 坏文件：跳到下一个随机视频继续
+            controller?.seekToNextMediaItem()   // 坏文件：跳下一个继续
         }
     }
 
@@ -78,10 +99,23 @@ class ImmersiveActivity : Activity() {
         playerView = findViewById(R.id.player_view)
         textTitle = findViewById(R.id.text_title)
         textHint = findViewById(R.id.text_hint)
+        btnFavorite = findViewById(R.id.btn_favorite)
+        drawer = findViewById(R.id.drawer)
+        playlistList = findViewById(R.id.playlist_list)
+        textPlaylistInfo = findViewById(R.id.text_playlist_info)
 
-        applyDisplayMode()
-        findViewById<Button>(R.id.btn_menu).setOnClickListener { showMenu() }
+        // 未指定起播条目 = 启动/自动播放进入 → 随机播放风格
+        fromLaunch = intent.getStringExtra(EXTRA_START_KEY) == null
+        scopeType = intent.getStringExtra(EXTRA_SCOPE_TYPE) ?: PlaybackService.SCOPE_ALL
+        category = intent.getStringExtra(EXTRA_CATEGORY)
+        startKey = intent.getStringExtra(EXTRA_START_KEY)
+        startIndex = intent.getIntExtra(EXTRA_START_INDEX, 0)
+
+        playerView.resizeMode = DisplayModes.resizeMode(library.settings.displayMode)
+
+        setupActions()
         setupGestures()
+        setupDrawer()
         connectController()
     }
 
@@ -120,13 +154,12 @@ class ImmersiveActivity : Activity() {
                 playerView.player = c
                 c.addListener(playerListener)
                 if (c.mediaItemCount == 0) {
-                    startRandomPlay(c)
+                    buildAndPlay(c)
                 } else {
-                    // 已有播放列表（服务未释放）：确保继续播
-                    PlayerModes.apply(c, PlaybackMode.LOOP_SHUFFLE)
+                    // 服务已有播放列表（返回本页）：确保继续播
                     if (c.playbackState == Player.STATE_IDLE) c.prepare()
                     if (!c.isPlaying) c.play()
-                    updateTitle()
+                    refreshChrome()
                 }
             }.onFailure {
                 textHint.text = "播放服务连接失败"
@@ -135,33 +168,236 @@ class ImmersiveActivity : Activity() {
         }, ContextCompat.getMainExecutor(this))
     }
 
-    private fun startRandomPlay(c: MediaController) {
+    private fun buildAndPlay(c: MediaController) {
         Thread {
-            val items = PlaylistBuilder.build(library, LibraryScope.All)
+            if (library.snapshot().isEmpty() && scopeType != PlaybackService.SCOPE_FAVORITES) {
+                library.refresh()
+            }
+            val list = entriesOfScope()
             runOnUiThread {
-                if (items.isEmpty()) {
-                    gotoHome()   // 库为空 → 主页引导添加视频源
-                    finish()
+                if (list.isEmpty()) {
+                    Toast.makeText(this, "该范围内没有视频", Toast.LENGTH_LONG).show()
+                    if (fromLaunch) {   // 启动且库为空 → 主页引导添加视频源
+                        gotoHome()
+                        finish()
+                    }
                     return@runOnUiThread
                 }
-                c.setMediaItems(items, Random.nextInt(items.size), 0L)
-                PlayerModes.apply(c, PlaybackMode.LOOP_SHUFFLE)   // 随机循环
+                entries = list
+                var index = list.indexOfFirst { it.key == startKey }
+                if (index < 0) {
+                    index = if (startKey == null) Random.nextInt(list.size)
+                    else startIndex.coerceIn(0, list.lastIndex)
+                }
+                val startPos = if (library.settings.resumePlayback) library.getProgress(list[index].key) else 0L
+                c.setMediaItems(list.map { it.toMediaItem() }, index, startPos)
+                // 启动进入：随机循环（抖音式）；指定进入：沿用记忆的播放模式
+                val mode = if (fromLaunch) PlaybackMode.LOOP_SHUFFLE else currentMode()
+                PlayerModes.apply(c, mode)
                 c.prepare()
                 c.play()
-                updateTitle()
+                refreshChrome()
             }
         }.start()
     }
 
-    private fun updateTitle() {
-        textTitle.text = controller?.currentMediaItem?.mediaMetadata?.title ?: ""
+    private fun entriesOfScope(): List<VideoEntry> = when (scopeType) {
+        PlaybackService.SCOPE_FAVORITES -> library.entriesFor(LibraryScope.Favorites)
+        PlaybackService.SCOPE_CATEGORY -> library.entriesFor(LibraryScope.Category(category ?: ""))
+        else -> library.entriesFor(LibraryScope.All)
     }
 
-    private fun applyDisplayMode() {
-        playerView.resizeMode = DisplayModes.resizeMode(library.settings.displayMode)
+    private fun currentMode(): PlaybackMode =
+        if (library.settings.rememberPlaybackMode) library.settings.lastPlaybackMode
+        else library.settings.defaultPlaybackMode
+
+    /** 刷新标题/收藏星标/播放列表高亮。 */
+    private fun refreshChrome() {
+        val c = controller ?: return
+        val entry = currentEntry()
+        textTitle.text = c.currentMediaItem?.mediaMetadata?.title ?: ""
+        btnFavorite.text = if (entry != null && library.isFavorite(entry.key)) "★" else "☆"
+        refreshPlaylistUi()
     }
 
-    // ---------- 手势：上滑/下滑带动画切换；轻点隐藏/显示标题提示 ----------
+    private fun refreshPlaylistUi() {
+        val c = controller ?: return
+        playlistLabels.clear()
+        for (i in 0 until c.mediaItemCount) {
+            val title = c.getMediaItemAt(i)?.mediaMetadata?.title?.toString() ?: "视频 ${i + 1}"
+            playlistLabels += if (i == c.currentMediaItemIndex) "▶ $title" else "　$title"
+        }
+        playlistAdapter?.notifyDataSetChanged()
+            ?: run {
+                playlistAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, playlistLabels)
+                playlistList.adapter = playlistAdapter
+            }
+        textPlaylistInfo.text = "共 ${c.mediaItemCount} 个 · 当前范围：${scopeLabel()}"
+    }
+
+    private fun scopeLabel(): String = when (scopeType) {
+        PlaybackService.SCOPE_FAVORITES -> "我的收藏"
+        PlaybackService.SCOPE_CATEGORY -> "分类：$category"
+        else -> "全部视频"
+    }
+
+    private fun currentEntry(): VideoEntry? {
+        val c = controller ?: return null
+        val key = c.currentMediaItem?.mediaId ?: return null
+        entries.firstOrNull { it.key == key }?.let { return it }
+        val path = key.substringAfter('|', missingDelimiterValue = "")
+        return if (path.isBlank()) null else VideoEntry(
+            key = key,
+            path = path,
+            volumeUuid = key.substringBefore('|').takeIf { it != "local" },
+            category = File(path).parentFile?.name ?: "",
+            title = File(path).nameWithoutExtension,
+            sizeBytes = File(path).length(),
+            lastModified = File(path).lastModified(),
+        )
+    }
+
+    // ---------- 右侧操作列（抖音式） + 播放设置弹窗 ----------
+
+    private fun setupActions() {
+        btnFavorite.setOnClickListener { toggleFavorite() }
+        findViewById<Button>(R.id.btn_menu).setOnClickListener { showMenu() }
+    }
+
+    private fun toggleFavorite() {
+        val entry = currentEntry() ?: return
+        val nowFav = library.toggleFavorite(entry)
+        Toast.makeText(this, if (nowFav) "已收藏" else "已取消收藏", Toast.LENGTH_SHORT).show()
+        refreshChrome()
+    }
+
+    /** 统一玻璃风格播放设置弹窗：画面/解码/模式 + 删除 + 更多入口。 */
+    private fun showMenu() {
+        val view = layoutInflater.inflate(R.layout.dialog_player_menu, null)
+        val dialog = AlertDialog.Builder(this).setView(view).create()
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        view.findViewById<Button>(R.id.menu_display).apply {
+            text = "画面适配：${DisplayModes.label(library.settings.displayMode)}"
+            setOnClickListener {
+                library.settings.displayMode = DisplayModes.next(library.settings.displayMode)
+                playerView.resizeMode = DisplayModes.resizeMode(library.settings.displayMode)
+                text = "画面适配：${DisplayModes.label(library.settings.displayMode)}"
+            }
+        }
+        view.findViewById<Button>(R.id.menu_decode).apply {
+            text = "解码模式：${decodeLabel(library.settings.decodeMode)}"
+            setOnClickListener {
+                library.settings.decodeMode = nextDecode(library.settings.decodeMode)
+                text = "解码模式：${decodeLabel(library.settings.decodeMode)}"
+                Toast.makeText(this@ImmersiveActivity, "解码模式下次播放生效", Toast.LENGTH_SHORT).show()
+            }
+        }
+        view.findViewById<Button>(R.id.menu_mode).apply {
+            text = "播放模式：${PlayerModes.label(currentMode())}"
+            setOnClickListener {
+                val mode = PlayerModes.next(currentMode())
+                controller?.let { PlayerModes.apply(it, mode) }
+                library.settings.lastPlaybackMode = mode
+                text = "播放模式：${PlayerModes.label(mode)}"
+            }
+        }
+        view.findViewById<Button>(R.id.menu_delete).setOnClickListener {
+            dialog.dismiss()
+            confirmDeleteCurrent()
+        }
+        view.findViewById<Button>(R.id.menu_more).setOnClickListener {
+            dialog.dismiss()
+            gotoHome()
+        }
+        view.findViewById<Button>(R.id.menu_close).setOnClickListener { dialog.dismiss() }
+        dialog.show()
+    }
+
+    private fun confirmDeleteCurrent() {
+        val entry = currentEntry() ?: return
+        AlertDialog.Builder(this)
+            .setTitle("删除视频")
+            .setMessage("确定删除「${entry.fileName}」？此操作不可恢复。")
+            .setPositiveButton("删除") { _, _ ->
+                with(controller) {
+                    val index = this?.currentMediaItemIndex ?: -1
+                    if (index >= 0 && index < (this?.mediaItemCount ?: 0)) this.removeMediaItem(index)
+                }
+                Thread {
+                    library.access.delete(File(entry.path))
+                    library.store.removeFavorite(entry.key)
+                    library.clearProgress(entry.key)
+                    library.refresh()
+                    entries = entriesOfScope()
+                    runOnUiThread {
+                        Toast.makeText(this, "已删除", Toast.LENGTH_SHORT).show()
+                        refreshChrome()
+                        if ((controller?.mediaItemCount ?: 0) == 0) finish()
+                    }
+                }.start()
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    // ---------- 播放列表抽屉（右滑进入） ----------
+
+    private fun setupDrawer() {
+        playlistList.setOnItemClickListener { _, _, position, _ ->
+            controller?.seekTo(position, 0L)
+            refreshChrome()
+        }
+        findViewById<Button>(R.id.btn_close_drawer).setOnClickListener { closeDrawer() }
+        findViewById<Button>(R.id.btn_scope_all).setOnClickListener { switchScope(PlaybackService.SCOPE_ALL, null) }
+        findViewById<Button>(R.id.btn_scope_fav).setOnClickListener { switchScope(PlaybackService.SCOPE_FAVORITES, null) }
+        findViewById<Button>(R.id.btn_scope_cat).setOnClickListener { pickCategory() }
+    }
+
+    private fun pickCategory() {
+        val cats = library.categories()
+        if (cats.isEmpty()) {
+            Toast.makeText(this, "暂无分类", Toast.LENGTH_SHORT).show()
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle("选择分类")
+            .setItems(cats.toTypedArray()) { _, which -> switchScope(PlaybackService.SCOPE_CATEGORY, cats[which]) }
+            .show()
+    }
+
+    private fun switchScope(newType: String, newCategory: String?) {
+        scopeType = newType
+        category = newCategory
+        startKey = null
+        startIndex = 0
+        controller?.let { c ->
+            c.stop()
+            buildAndPlay(c)
+        }
+    }
+
+    private fun openDrawer() {
+        if (drawerOpen) return
+        drawerOpen = true
+        drawer.visibility = View.VISIBLE
+        drawer.post {
+            drawer.translationX = -drawer.width.toFloat()
+            drawer.animate().translationX(0f).setDuration(DRAWER_ANIM_MS).start()
+            content.animate().translationX(content.width * 0.22f).setDuration(DRAWER_ANIM_MS).start()
+        }
+    }
+
+    private fun closeDrawer() {
+        if (!drawerOpen) return
+        drawerOpen = false
+        drawer.animate().translationX(-drawer.width.toFloat()).setDuration(DRAWER_ANIM_MS)
+            .withEndAction { drawer.visibility = View.GONE }
+            .start()
+        content.animate().translationX(0f).setDuration(DRAWER_ANIM_MS).start()
+    }
+
+    // ---------- 手势：上下切换（带动画）/ 右滑列表 / 轻点隐藏界面 ----------
 
     private fun setupGestures() {
         playerView.setOnTouchListener { _: View, event: MotionEvent ->
@@ -176,10 +412,13 @@ class ImmersiveActivity : Activity() {
                     val dx = event.rawX - downX
                     val dy = event.rawY - downY
                     val dt = System.currentTimeMillis() - downAt
-                    val threshold = 120 * resources.displayMetrics.density
+                    val threshold = 110 * resources.displayMetrics.density
                     when {
-                        abs(dy) > threshold && abs(dy) > abs(dx) -> animateSwitch(next = dy < 0)
-                        abs(dx) < threshold && abs(dy) < threshold && dt < 400 -> toggleChrome()
+                        abs(dx) > threshold && abs(dx) > abs(dy) * 1.5 ->
+                            if (dx > 0) openDrawer() else closeDrawer()
+                        abs(dy) > threshold && abs(dy) >= abs(dx) -> animateSwitch(next = dy < 0)
+                        abs(dx) < threshold && abs(dy) < threshold && dt < 400 ->
+                            if (drawerOpen) closeDrawer() else toggleChrome()
                     }
                     true
                 }
@@ -219,42 +458,7 @@ class ImmersiveActivity : Activity() {
         textHint.visibility = v
     }
 
-    // ---------- 播放设置弹窗（含"更多"→ 管理主页） ----------
-
-    private fun showMenu() {
-        val items = arrayOf(
-            "画面适配：${DisplayModes.label(library.settings.displayMode)}",
-            "解码模式：${decodeLabel(library.settings.decodeMode)}",
-            "播放模式：${PlayerModes.label(currentMode())}",
-        )
-        AlertDialog.Builder(this)
-            .setTitle("视频播放设置")
-            .setItems(items) { _, which ->
-                when (which) {
-                    0 -> {
-                        library.settings.displayMode = DisplayModes.next(library.settings.displayMode)
-                        applyDisplayMode()
-                        Toast.makeText(this, "画面适配：${DisplayModes.label(library.settings.displayMode)}", Toast.LENGTH_SHORT).show()
-                    }
-                    1 -> {
-                        library.settings.decodeMode = nextDecode(library.settings.decodeMode)
-                        Toast.makeText(this, "解码模式：${decodeLabel(library.settings.decodeMode)}（下次播放生效）", Toast.LENGTH_SHORT).show()
-                    }
-                    2 -> {
-                        val mode = PlayerModes.next(currentMode())
-                        controller?.let { PlayerModes.apply(it, mode) }
-                        library.settings.lastPlaybackMode = mode
-                        Toast.makeText(this, "播放模式：${PlayerModes.label(mode)}", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
-            .setNeutralButton("更多：视频管理") { _, _ -> gotoHome() }
-            .setNegativeButton("关闭", null)
-            .show()
-    }
-
-    private fun currentMode(): PlaybackMode =
-        controller?.let { PlayerModes.of(it) } ?: library.settings.lastPlaybackMode
+    // ---------- 工具 ----------
 
     private fun decodeLabel(mode: DecodeMode): String = when (mode) {
         DecodeMode.AUTO -> "自动（硬解优先）"
@@ -273,6 +477,12 @@ class ImmersiveActivity : Activity() {
     }
 
     companion object {
+        const val EXTRA_SCOPE_TYPE = "scope_type"     // ALL / FAVORITES / CATEGORY
+        const val EXTRA_CATEGORY = "category"
+        const val EXTRA_START_KEY = "***"
+        const val EXTRA_START_INDEX = "start_index"
+
         private const val ANIM_MS = 220L
+        private const val DRAWER_ANIM_MS = 200L
     }
 }

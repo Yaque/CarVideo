@@ -29,10 +29,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MyApplication">
 
-        <!-- 抖音式沉浸启动页：启动即随机播放，点击进入管理主页 -->
+        <!-- 抖音式沉浸播放页（统一播放入口：启动随机播 / 管理页点击进入） -->
         <activity
             android:name=".ui.ImmersiveActivity"
             android:exported="true"
+            android:configChanges="orientation|screenSize|keyboardHidden"
             android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -44,13 +45,6 @@
         <activity
             android:name=".ui.MainActivity"
             android:exported="false"
-            android:launchMode="singleTask" />
-
-        <!-- 播放界面：收藏 / 删除 / 单个循环 / 整体随机循环 / 整体顺序循环 / 选分类 -->
-        <activity
-            android:name=".ui.PlayerActivity"
-            android:exported="false"
-            android:configChanges="orientation|screenSize|keyboardHidden"
             android:launchMode="singleTask" />
 
         <!-- 设置：视频源（含 U 盘）/ 解码模式 / 播放默认值 -->
