@@ -67,17 +67,19 @@
             android:progressTint="#8FB8FF"
             android:thumbTint="#FFFFFF" />
 
-        <!-- 单击暂停时的中央图标（抖音式） -->
+        <!-- 单击暂停时的中央图标（玻璃圆钮，与整体 UI 统一） -->
         <TextView
             android:id="@+id/text_pause"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="84dp"
+            android:layout_height="84dp"
             android:layout_gravity="center"
+            android:background="@drawable/glass_circle"
+            android:gravity="center"
             android:shadowColor="#99000000"
             android:shadowRadius="14"
             android:text="▶"
-            android:textColor="#CCFFFFFF"
-            android:textSize="96sp"
+            android:textColor="#FFFFFF"
+            android:textSize="32sp"
             android:visibility="gone" />
     </FrameLayout>
 
@@ -124,13 +126,13 @@
         android:textColor="#E8EEF9"
         android:textSize="14sp" />
 
-    <!-- 播放列表抽屉（右滑 / 右上按钮进入） -->
+    <!-- 播放列表抽屉（右滑 / 右上按钮进入）：高不透明度玻璃背景保证可读 -->
     <LinearLayout
         android:id="@+id/drawer"
         android:layout_width="320dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        android:background="@drawable/glass_panel"
+        android:background="@drawable/glass_drawer"
         android:orientation="vertical"
         android:padding="14dp"
         android:visibility="gone">
