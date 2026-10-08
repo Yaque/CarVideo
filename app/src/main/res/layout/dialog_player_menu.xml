@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:text="播放设置"
-        android:textColor="#FFFFFF"
+        android:textColor="@color/text_primary"
         android:textSize="18sp"
         android:textStyle="bold" />
 
@@ -24,7 +24,7 @@
         android:background="@drawable/glass_button"
         android:minHeight="48dp"
         android:text="画面适配"
-        android:textColor="#E8EEF9"
+        android:textColor="@color/text_primary"
         android:textSize="14sp" />
 
     <Button
@@ -35,7 +35,7 @@
         android:background="@drawable/glass_button"
         android:minHeight="48dp"
         android:text="解码模式"
-        android:textColor="#E8EEF9"
+        android:textColor="@color/text_primary"
         android:textSize="14sp" />
 
     <Button
@@ -46,7 +46,7 @@
         android:background="@drawable/glass_button"
         android:minHeight="48dp"
         android:text="播放模式"
-        android:textColor="#B9C9FF"
+        android:textColor="@color/accent_soft"
         android:textSize="14sp" />
 
     <!-- 界面字体：统一缩放所有页面文字（A−/A＋ 调档，关闭弹窗后生效） -->
@@ -63,7 +63,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="界面字体：100%"
-            android:textColor="#E8EEF9"
+            android:textColor="@color/text_primary"
             android:textSize="14sp" />
 
         <Button
@@ -75,7 +75,7 @@
             android:minHeight="48dp"
             android:minWidth="52dp"
             android:text="A−"
-            android:textColor="#E8EEF9"
+            android:textColor="@color/text_primary"
             android:textSize="14sp" />
 
         <Button
@@ -86,9 +86,20 @@
             android:minHeight="48dp"
             android:minWidth="52dp"
             android:text="A＋"
-            android:textColor="#E8EEF9"
+            android:textColor="@color/text_primary"
             android:textSize="14sp" />
     </LinearLayout>
+
+    <Button
+        android:id="@+id/menu_theme"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/glass_button"
+        android:minHeight="48dp"
+        android:text="外观"
+        android:textColor="@color/text_primary"
+        android:textSize="14sp" />
 
     <Button
         android:id="@+id/menu_delete"
@@ -98,7 +109,7 @@
         android:background="@drawable/glass_button"
         android:minHeight="48dp"
         android:text="删除当前视频"
-        android:textColor="#FF9E9E"
+        android:textColor="@color/danger"
         android:textSize="14sp" />
 
     <LinearLayout
@@ -116,7 +127,7 @@
             android:background="@drawable/glass_button_accent"
             android:minHeight="48dp"
             android:text="更多：视频管理"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/text_on_accent"
             android:textSize="14sp" />
 
         <Button
@@ -127,7 +138,7 @@
             android:background="@drawable/glass_button"
             android:minHeight="48dp"
             android:text="关闭"
-            android:textColor="#E8EEF9"
+            android:textColor="@color/text_primary"
             android:textSize="14sp" />
     </LinearLayout>
 </LinearLayout>

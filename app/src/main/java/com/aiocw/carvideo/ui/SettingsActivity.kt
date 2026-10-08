@@ -20,8 +20,10 @@ import com.aiocw.carvideo.playback.DisplayModes
 import com.aiocw.carvideo.playback.PlayerModes
 import com.aiocw.carvideo.shared.Library
 import com.aiocw.carvideo.shared.model.DecodeMode
+import com.aiocw.carvideo.shared.model.ThemeMode
 import com.aiocw.carvideo.shared.model.VideoSource
 import com.aiocw.carvideo.ui.glass.GlassBackground
+import androidx.core.content.ContextCompat
 
 /**
  * 设置页：存储权限 / 视频源（含 U 盘）/ 扫描与自动播放 / 解码模式 / 播放默认值。
@@ -36,18 +38,20 @@ class SettingsActivity : Activity() {
     private lateinit var textDefaultMode: TextView
     private lateinit var textFontScale: TextView
 
-    /** 当前界面应用的字号系数（与设置不一致时重建，字号即时生效）。 */
+    /** 当前界面应用的字号系数与外观模式（与设置不一致时重建，全局即时生效）。 */
     private var appliedFontScale = 1f
+    private var appliedThemeMode = ThemeMode.AUTO
 
-    /** 界面字号统一缩放：创建前套用全局字体缩放系数。 */
+    /** 界面外观统一配置：创建前套用字号缩放 + 昼夜模式。 */
     override fun attachBaseContext(newBase: Context) {
-        super.attachBaseContext(FontScale.wrap(newBase))
+        super.attachBaseContext(UiConfig.wrap(newBase))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         library = (application as App).library
         appliedFontScale = library.settings.fontScale
+        appliedThemeMode = library.settings.themeMode
         setContentView(R.layout.activity_settings)
 
         textPermission = findViewById(R.id.text_permission)
@@ -64,6 +68,7 @@ class SettingsActivity : Activity() {
         GlassBackground.frost(this, findViewById(R.id.card_decode), 22f)
         GlassBackground.frost(this, findViewById(R.id.card_play), 22f)
         GlassBackground.frost(this, findViewById(R.id.card_font), 22f)
+        GlassBackground.frost(this, findViewById(R.id.card_theme), 22f)
 
         findViewById<Button>(R.id.btn_back).setOnClickListener { finish() }
         findViewById<Button>(R.id.btn_permission).setOnClickListener { requestPermission() }
@@ -80,6 +85,11 @@ class SettingsActivity : Activity() {
             recreate()
         }
 
+        // 外观：白天 / 黑夜 / 跟随系统，点击即生效
+        findViewById<Button>(R.id.btn_theme_light).setOnClickListener { changeThemeMode(ThemeMode.LIGHT) }
+        findViewById<Button>(R.id.btn_theme_dark).setOnClickListener { changeThemeMode(ThemeMode.DARK) }
+        findViewById<Button>(R.id.btn_theme_auto).setOnClickListener { changeThemeMode(ThemeMode.AUTO) }
+
         bindSwitch(R.id.switch_scan_on_mount, library.settings.scanOnMount) { library.settings.scanOnMount = it }
         bindSwitch(R.id.switch_auto_play, library.settings.autoPlayOnMount) { library.settings.autoPlayOnMount = it }
         bindSwitch(R.id.switch_resume, library.settings.resumePlayback) { library.settings.resumePlayback = it }
@@ -88,8 +98,8 @@ class SettingsActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
-        // 字号在播放菜单被改过 → 重建界面按新字号渲染
-        if (library.settings.fontScale != appliedFontScale) {
+        // 字号/外观在播放菜单被改过 → 重建界面生效
+        if (library.settings.fontScale != appliedFontScale || library.settings.themeMode != appliedThemeMode) {
             recreate()
             return
         }
@@ -98,6 +108,12 @@ class SettingsActivity : Activity() {
 
     private fun changeFontScale(up: Boolean) {
         FontScale.adjust(this, up)
+        recreate()
+    }
+
+    private fun changeThemeMode(mode: ThemeMode) {
+        if (library.settings.themeMode == mode) return
+        library.settings.themeMode = mode
         recreate()
     }
 
@@ -122,7 +138,25 @@ class SettingsActivity : Activity() {
         textDisplayMode.text = "画面适配：" + DisplayModes.label(library.settings.displayMode)
         textDefaultMode.text = "默认播放模式：" + PlayerModes.label(library.settings.defaultPlaybackMode)
         textFontScale.text = FontScale.label(library.settings.fontScale)
+        renderThemeButtons()
         renderSources()
+    }
+
+    /** 外观三选一：选中项用强调按钮样式高亮。 */
+    private fun renderThemeButtons() {
+        val mode = library.settings.themeMode
+        val buttons = mapOf(
+            R.id.btn_theme_light to ThemeMode.LIGHT,
+            R.id.btn_theme_dark to ThemeMode.DARK,
+            R.id.btn_theme_auto to ThemeMode.AUTO,
+        )
+        for ((id, value) in buttons) {
+            findViewById<Button>(id).apply {
+                val selected = value == mode
+                setBackgroundResource(if (selected) R.drawable.glass_button_accent else R.drawable.glass_button)
+                setTextColor(ContextCompat.getColor(context, if (selected) R.color.text_on_accent else R.color.text_primary))
+            }
+        }
     }
 
     private fun renderSources() {
@@ -160,18 +194,18 @@ class SettingsActivity : Activity() {
         info.addView(TextView(this).apply {
             text = source.displayName + if (source.autoPlayOnMount) "（插入自动播放）" else ""
             textSize = 15f
-            setTextColor(0xFFFFFFFF.toInt())
+            setTextColor(ContextCompat.getColor(context, R.color.text_primary))
         })
         info.addView(TextView(this).apply {
             text = source.absolutePath + if (source.volumeUuid != null) "  [卷 ${source.volumeUuid}]" else ""
             textSize = 12f
-            setTextColor(0xFFA9B4C9.toInt())
+            setTextColor(ContextCompat.getColor(context, R.color.text_secondary))
         })
         row.addView(info)
         row.addView(Button(this).apply {
             text = "移除"
             setBackgroundResource(R.drawable.glass_button)
-            setTextColor(0xFFFF9E9E.toInt())
+            setTextColor(ContextCompat.getColor(context, R.color.danger))
             minWidth = (56 * density).toInt()
             setOnClickListener { confirmRemoveSource(source) }
         })

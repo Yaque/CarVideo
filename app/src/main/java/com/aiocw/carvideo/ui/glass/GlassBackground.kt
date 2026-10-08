@@ -1,6 +1,7 @@
 package com.aiocw.carvideo.ui.glass
 
 import android.app.Activity
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -11,12 +12,15 @@ import android.graphics.Shader
 import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import android.view.View
+import androidx.core.content.ContextCompat
 import androidx.core.view.doOnLayout
+import com.aiocw.carvideo.R
 
 /**
  * 毛玻璃（Glassmorphism）基础设施：
  *
  * 1. [install] 生成 iOS 风格彩色壁纸（线性渐变 + 柔光色斑），设为窗口背景；
+ *    壁纸随昼夜模式切换（白天浅色、黑夜深色），并同步系统栏图标明暗；
  * 2. [frost] 在面板完成布局后，按面板在屏幕上的实际位置裁剪壁纸 → 降采样模糊 →
  *    作为该面板的磨砂底，再叠加半透明渐变/高光/描边（[FrostedDrawable]）。
  *
@@ -25,17 +29,21 @@ import androidx.core.view.doOnLayout
  */
 object GlassBackground {
 
-    private var wallpaper: Bitmap? = null
+    /** 按昼夜模式各缓存一张壁纸（白天/黑夜切换零等待）。 */
+    private val wallpapers = mutableMapOf<Boolean, Bitmap>()
 
     /** 安装壁纸 + 半透明系统栏。setContentView 之后调用。 */
     fun install(activity: Activity) {
+        val light = isLight(activity)
         val bmp = wallpaper(activity)
         activity.window.setBackgroundDrawable(BitmapDrawable(activity.resources, bmp))
-        activity.window.statusBarColor = Color.parseColor("#66000000")
-        activity.window.navigationBarColor = Color.parseColor("#66000000")
+        activity.window.statusBarColor = Color.parseColor(if (light) "#33000000" else "#66000000")
+        activity.window.navigationBarColor = Color.parseColor(if (light) "#33000000" else "#66000000")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            // 深色壁纸 → 浅色状态栏图标
-            activity.window.decorView.systemUiVisibility = 0
+            // 浅色壁纸 → 深色状态栏图标；深色壁纸 → 浅色图标
+            @Suppress("DEPRECATION")
+            activity.window.decorView.systemUiVisibility =
+                if (light) View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR else 0
         }
     }
 
@@ -63,52 +71,83 @@ object GlassBackground {
                 (ch / 10).coerceAtLeast(1),
                 true
             )
-            v.background = FrostedDrawable(frost, radiusPx)
+            v.background = FrostedDrawable(
+                frost = frost,
+                radiusPx = radiusPx,
+                fillTop = ContextCompat.getColor(activity, R.color.frost_fill_top),
+                fillBottom = ContextCompat.getColor(activity, R.color.frost_fill_bottom),
+                strokeColor = ContextCompat.getColor(activity, R.color.frost_stroke),
+                highlightColor = ContextCompat.getColor(activity, R.color.frost_highlight),
+            )
         }
     }
 
+    /** 当前是否白天模式（由 UiConfig 覆盖后的 uiMode 决定）。 */
+    fun isLight(activity: Activity): Boolean =
+        (activity.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+            Configuration.UI_MODE_NIGHT_NO
+
     /** 生成（并缓存）壁纸位图，尺寸与屏幕一致。 */
     fun wallpaper(activity: Activity): Bitmap {
-        wallpaper?.let { return it }
+        val light = isLight(activity)
+        wallpapers[light]?.let { return it }
         val dm = activity.resources.displayMetrics
         val w = dm.widthPixels.coerceAtLeast(720)
         val h = dm.heightPixels.coerceAtLeast(1280)
-        val bmp = generate(w, h)
-        wallpaper = bmp
+        val bmp = generate(w, h, light)
+        wallpapers[light] = bmp
         return bmp
     }
 
     /** 低分辨率绘制渐变 + 柔光色斑，再双线性放大 → 天然柔和。 */
-    private fun generate(w: Int, h: Int): Bitmap {
+    private fun generate(w: Int, h: Int, light: Boolean): Bitmap {
         val sw = 256
         val sh = (sw.toFloat() * h / w).toInt().coerceAtLeast(1)
         val small = Bitmap.createBitmap(sw, sh, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(small)
 
-        // 底色：深空蓝纵向渐变
+        // 底色：纵向渐变（白天浅蓝灰 / 黑夜深空蓝）
+        val baseColors = if (light) {
+            intArrayOf(
+                Color.parseColor("#E9EFF9"),
+                Color.parseColor("#DCE6F5"),
+                Color.parseColor("#EAF0FA"),
+                Color.parseColor("#E9EFF9"),
+            )
+        } else {
+            intArrayOf(
+                Color.parseColor("#0A0E1F"),
+                Color.parseColor("#111B3E"),
+                Color.parseColor("#0B1226"),
+                Color.parseColor("#0A0E1F"),
+            )
+        }
         canvas.drawRect(
             0f, 0f, sw.toFloat(), sh.toFloat(),
             Paint().apply {
                 shader = LinearGradient(
                     0f, 0f, 0f, sh.toFloat(),
-                    intArrayOf(
-                        Color.parseColor("#0A0E1F"),
-                        Color.parseColor("#111B3E"),
-                        Color.parseColor("#0B1226"),
-                        Color.parseColor("#0A0E1F"),
-                    ),
+                    baseColors,
                     null,
                     Shader.TileMode.CLAMP
                 )
             }
         )
 
-        // 柔光色斑（iOS 壁纸质感）
-        blob(canvas, sw * 0.18f, sh * 0.12f, sw * 0.85f, "#4B3FD1", 0x88)
-        blob(canvas, sw * 0.92f, sh * 0.30f, sw * 0.80f, "#1D7FA8", 0x77)
-        blob(canvas, sw * 0.12f, sh * 0.72f, sw * 0.90f, "#7A3BD8", 0x66)
-        blob(canvas, sw * 0.85f, sh * 0.92f, sw * 0.85f, "#2B5CC7", 0x77)
-        blob(canvas, sw * 0.50f, sh * 0.52f, sw * 0.70f, "#16244F", 0x99)
+        // 柔光色斑（iOS 壁纸质感；白天为低饱和粉彩）
+        if (light) {
+            blob(canvas, sw * 0.18f, sh * 0.12f, sw * 0.85f, "#8FA8FF", 0x55)
+            blob(canvas, sw * 0.92f, sh * 0.30f, sw * 0.80f, "#7FD0E8", 0x4D)
+            blob(canvas, sw * 0.12f, sh * 0.72f, sw * 0.90f, "#B490F0", 0x44)
+            blob(canvas, sw * 0.85f, sh * 0.92f, sw * 0.85f, "#8FB6FF", 0x4D)
+            blob(canvas, sw * 0.50f, sh * 0.52f, sw * 0.70f, "#C9D6EE", 0x66)
+        } else {
+            blob(canvas, sw * 0.18f, sh * 0.12f, sw * 0.85f, "#4B3FD1", 0x88)
+            blob(canvas, sw * 0.92f, sh * 0.30f, sw * 0.80f, "#1D7FA8", 0x77)
+            blob(canvas, sw * 0.12f, sh * 0.72f, sw * 0.90f, "#7A3BD8", 0x66)
+            blob(canvas, sw * 0.85f, sh * 0.92f, sw * 0.85f, "#2B5CC7", 0x77)
+            blob(canvas, sw * 0.50f, sh * 0.52f, sw * 0.70f, "#16244F", 0x99)
+        }
 
         return Bitmap.createScaledBitmap(small, w, h, true)
     }

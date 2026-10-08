@@ -13,11 +13,16 @@ import android.graphics.drawable.Drawable
 
 /**
  * 磨砂玻璃面板 Drawable：
- * 圆角裁剪的模糊壁纸底 + 纵向半透明白渐变 + 顶部高光 + 细描边（iOS 毛玻璃质感）。
+ * 圆角裁剪的模糊壁纸底 + 纵向半透明渐变 + 顶部高光 + 细描边（iOS 毛玻璃质感）。
+ * 叠色由调用方按昼夜模式注入（见 colors.xml / values-night/colors.xml 的 frost_*）。
  */
 class FrostedDrawable(
     private val frost: Bitmap,
     private val radiusPx: Float,
+    private val fillTop: Int,
+    private val fillBottom: Int,
+    private val strokeColor: Int,
+    private val highlightColor: Int,
 ) : Drawable() {
 
     private val bitmapPaint = Paint(Paint.FILTER_BITMAP_FLAG)
@@ -25,19 +30,19 @@ class FrostedDrawable(
     private val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = radiusPx / 16f + 1f
-        color = 0x33FFFFFF
+        color = strokeColor
     }
     private val highlightPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = radiusPx / 16f + 1f
-        color = 0x2EFFFFFF
+        color = highlightColor
     }
 
     override fun onBoundsChange(bounds: android.graphics.Rect) {
         // 上亮下暗的玻璃渐变（随边界重建 shader）
         fillPaint.shader = LinearGradient(
             0f, bounds.top.toFloat(), 0f, bounds.bottom.toFloat(),
-            0x2EFFFFFF, 0x0CFFFFFF,
+            fillTop, fillBottom,
             Shader.TileMode.CLAMP
         )
     }
@@ -51,11 +56,11 @@ class FrostedDrawable(
         val save = canvas.save()
         canvas.clipPath(path)
         canvas.drawBitmap(frost, null, b, bitmapPaint)   // 模糊壁纸（拉伸即磨砂）
-        canvas.drawRect(b, fillPaint)                     // 玻璃白渐变
+        canvas.drawRect(b, fillPaint)                     // 玻璃渐变
         canvas.restoreToCount(save)
 
         canvas.drawRoundRect(rect, radiusPx, radiusPx, strokePaint)
-        // 顶部高光（仅上半圆角弧线段，简化为整条上边线的内侧亮线）
+        // 顶部高光（上边线内侧亮线）
         canvas.drawLine(
             b.left + radiusPx, b.top + strokePaint.strokeWidth,
             b.right - radiusPx, b.top + strokePaint.strokeWidth,

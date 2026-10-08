@@ -22,7 +22,7 @@
             android:minWidth="0dp"
             android:singleLine="true"
             android:text="@string/app_name"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/text_primary"
             android:textSize="22sp"
             android:textStyle="bold"
             android:shadowColor="#66000000"
@@ -38,7 +38,7 @@
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
             android:text="扫描"
-            android:textColor="#EDF2FB"
+            android:textColor="@color/text_primary"
             android:textSize="14sp" />
 
         <Button
@@ -50,7 +50,7 @@
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
             android:text="设置"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/text_on_accent"
             android:textSize="15sp" />
     </LinearLayout>
 
@@ -98,7 +98,7 @@
                 android:gravity="center"
                 android:lineSpacingExtra="6dp"
                 android:text="暂无视频\n\n请在「设置」中添加视频源文件夹（含 U 盘）"
-                android:textColor="#8E9AB2"
+                android:textColor="@color/text_tertiary"
                 android:textSize="16sp"
                 android:visibility="gone" />
         </FrameLayout>

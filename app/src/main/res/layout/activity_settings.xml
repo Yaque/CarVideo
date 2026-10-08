@@ -28,14 +28,14 @@
                 android:paddingStart="22dp"
                 android:paddingEnd="22dp"
                 android:text="←"
-                android:textColor="#EDF2FB"
+                android:textColor="@color/text_primary"
                 android:textSize="17sp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="设置"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/text_primary"
                 android:textSize="24sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -54,7 +54,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="存储权限"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -70,7 +70,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:textColor="#C9D2E3"
+                    android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
                 <Button
@@ -82,7 +82,7 @@
                     android:paddingStart="20dp"
                     android:paddingEnd="20dp"
                     android:text="去授权"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/text_on_accent"
                     android:textSize="14sp" />
             </LinearLayout>
         </LinearLayout>
@@ -101,7 +101,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="视频源文件夹（含 U 盘）"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -120,7 +120,7 @@
                 android:background="@drawable/glass_button"
                 android:minHeight="46dp"
                 android:text="＋ 添加视频源文件夹…"
-                android:textColor="#EDF2FB"
+                android:textColor="@color/text_primary"
                 android:textSize="15sp" />
 
             <Switch
@@ -129,7 +129,7 @@
                 android:layout_height="wrap_content"
                 android:paddingTop="10dp"
                 android:text="U 盘插入时自动扫描"
-                android:textColor="#E8EEF9"
+                android:textColor="@color/text_primary"
                 android:textSize="15sp" />
 
             <Switch
@@ -137,7 +137,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="U 盘插入时自动播放（随机）"
-                android:textColor="#E8EEF9"
+                android:textColor="@color/text_primary"
                 android:textSize="15sp" />
 
             <Switch
@@ -145,7 +145,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="断点续播"
-                android:textColor="#E8EEF9"
+                android:textColor="@color/text_primary"
                 android:textSize="15sp" />
         </LinearLayout>
 
@@ -163,7 +163,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="解码"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -179,7 +179,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:textColor="#C9D2E3"
+                    android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
                 <Button
@@ -191,7 +191,7 @@
                     android:paddingStart="20dp"
                     android:paddingEnd="20dp"
                     android:text="切换"
-                    android:textColor="#EDF2FB"
+                    android:textColor="@color/text_primary"
                     android:textSize="14sp" />
             </LinearLayout>
         </LinearLayout>
@@ -210,7 +210,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="播放"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -226,7 +226,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:textColor="#C9D2E3"
+                    android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
                 <Button
@@ -238,7 +238,7 @@
                     android:paddingStart="20dp"
                     android:paddingEnd="20dp"
                     android:text="切换"
-                    android:textColor="#EDF2FB"
+                    android:textColor="@color/text_primary"
                     android:textSize="14sp" />
             </LinearLayout>
 
@@ -254,7 +254,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:textColor="#C9D2E3"
+                    android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
                 <Button
@@ -266,7 +266,7 @@
                     android:paddingStart="20dp"
                     android:paddingEnd="20dp"
                     android:text="切换"
-                    android:textColor="#EDF2FB"
+                    android:textColor="@color/text_primary"
                     android:textSize="14sp" />
             </LinearLayout>
 
@@ -276,7 +276,7 @@
                 android:layout_height="wrap_content"
                 android:paddingTop="10dp"
                 android:text="记住上次播放模式（否则用默认值）"
-                android:textColor="#E8EEF9"
+                android:textColor="@color/text_primary"
                 android:textSize="15sp" />
         </LinearLayout>
 
@@ -294,7 +294,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="界面字体"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -303,7 +303,7 @@
                 android:layout_height="wrap_content"
                 android:paddingTop="6dp"
                 android:text="所有界面文字统一缩放（80% ~ 150%），调整后立即生效"
-                android:textColor="#C9D2E3"
+                android:textColor="@color/text_secondary"
                 android:textSize="14sp" />
 
             <LinearLayout
@@ -322,7 +322,7 @@
                     android:background="@drawable/glass_button"
                     android:minHeight="44dp"
                     android:text="A−"
-                    android:textColor="#E8EEF9"
+                    android:textColor="@color/text_primary"
                     android:textSize="15sp" />
 
                 <TextView
@@ -332,7 +332,7 @@
                     android:layout_weight="1"
                     android:gravity="center"
                     android:text="100%"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/text_primary"
                     android:textSize="20sp"
                     android:textStyle="bold" />
 
@@ -346,7 +346,7 @@
                     android:background="@drawable/glass_button"
                     android:minHeight="44dp"
                     android:text="A＋"
-                    android:textColor="#E8EEF9"
+                    android:textColor="@color/text_primary"
                     android:textSize="15sp" />
 
                 <Button
@@ -358,7 +358,77 @@
                     android:background="@drawable/glass_button"
                     android:minHeight="44dp"
                     android:text="默认"
-                    android:textColor="#EDF2FB"
+                    android:textColor="@color/text_primary"
+                    android:textSize="15sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 外观卡片：白天 / 黑夜 / 跟随系统 -->
+        <LinearLayout
+            android:id="@+id/card_theme"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/glass_panel"
+            android:orientation="vertical"
+            android:padding="18dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="外观"
+                android:textColor="@color/text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="6dp"
+                android:text="白天 / 黑夜 / 跟随系统，全界面即时切换"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingTop="10dp">
+
+                <Button
+                    android:id="@+id/btn_theme_light"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/glass_button"
+                    android:minHeight="44dp"
+                    android:text="白天"
+                    android:textColor="@color/text_primary"
+                    android:textSize="15sp" />
+
+                <Button
+                    android:id="@+id/btn_theme_dark"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/glass_button"
+                    android:minHeight="44dp"
+                    android:text="黑夜"
+                    android:textColor="@color/text_primary"
+                    android:textSize="15sp" />
+
+                <Button
+                    android:id="@+id/btn_theme_auto"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/glass_button"
+                    android:minHeight="44dp"
+                    android:text="跟随系统"
+                    android:textColor="@color/text_primary"
                     android:textSize="15sp" />
             </LinearLayout>
         </LinearLayout>

@@ -14,7 +14,7 @@
         android:layout_width="30dp"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:textColor="#8E9AB2"
+        android:textColor="@color/text_tertiary"
         android:textSize="13sp" />
 
     <LinearLayout
@@ -29,7 +29,7 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:singleLine="true"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/text_primary"
             android:textSize="14sp"
             android:textStyle="bold" />
 
@@ -40,7 +40,7 @@
             android:layout_marginTop="2dp"
             android:ellipsize="end"
             android:singleLine="true"
-            android:textColor="#A9B4C9"
+            android:textColor="@color/text_secondary"
             android:textSize="11sp" />
     </LinearLayout>
 
@@ -50,7 +50,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:text="▶ 正在播放"
-        android:textColor="#FFD479"
+        android:textColor="@color/gold"
         android:textSize="11sp"
         android:visibility="gone" />
 </LinearLayout>

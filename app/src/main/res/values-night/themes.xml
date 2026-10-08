@@ -1,0 +1,8 @@
+<resources>
+    <!-- 深色玻璃主题（黑夜）：与白天同名，仅换基底 -->
+    <style name="Theme.CarVideo" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@drawable/bg_window</item>
+        <item name="android:statusBarColor">#66000000</item>
+        <item name="android:navigationBarColor">#66000000</item>
+    </style>
+</resources>

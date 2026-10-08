@@ -40,6 +40,7 @@ import com.aiocw.carvideo.shared.Library
 import com.aiocw.carvideo.shared.model.DecodeMode
 import com.aiocw.carvideo.shared.model.LibraryScope
 import com.aiocw.carvideo.shared.model.PlaybackMode
+import com.aiocw.carvideo.shared.model.ThemeMode
 import com.aiocw.carvideo.shared.model.VideoEntry
 import com.google.common.util.concurrent.ListenableFuture
 import java.io.File
@@ -88,8 +89,9 @@ class ImmersiveActivity : Activity() {
     private var seekDragging = false
     private var restoredAfterRecreate = false   // 重建恢复：不重播起播条目，接着当前进度播
 
-    /** 当前界面应用的字号系数（与设置不一致时重建，全局字号即时生效）。 */
+    /** 当前界面应用的字号系数与外观模式（与设置不一致时重建，全局即时生效）。 */
     private var appliedFontScale = 1f
+    private var appliedThemeMode = ThemeMode.AUTO
 
     private val hideHintRunnable = Runnable { textHint.visibility = View.GONE }
     private val hideCurrentPlaceholderRunnable = Runnable { hideCurrentPlaceholder() }
@@ -136,16 +138,17 @@ class ImmersiveActivity : Activity() {
         }
     }
 
-    /** 界面字号统一缩放：创建前套用全局字体缩放系数（所有页面/弹窗/列表一致）。 */
+    /** 界面外观统一配置：创建前套用字号缩放 + 昼夜模式。 */
     override fun attachBaseContext(newBase: Context) {
-        super.attachBaseContext(FontScale.wrap(newBase))
+        super.attachBaseContext(UiConfig.wrap(newBase))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         library = (application as App).library
         appliedFontScale = library.settings.fontScale
-        restoredAfterRecreate = savedInstanceState != null   // 字号调整等重建：不跳回原起播条目
+        appliedThemeMode = library.settings.themeMode
+        restoredAfterRecreate = savedInstanceState != null   // 字号/外观等重建：不跳回原起播条目
         setContentView(R.layout.activity_immersive)
         enterImmersive()
 
@@ -189,8 +192,8 @@ class ImmersiveActivity : Activity() {
 
     override fun onStart() {
         super.onStart()
-        // 字号在设置页/播放菜单被改过 → 重建界面按新字号渲染（播放不中断，服务继续播）
-        if (library.settings.fontScale != appliedFontScale) {
+        // 字号/外观在设置页/播放菜单被改过 → 重建界面生效（播放不中断，服务继续播）
+        if (library.settings.fontScale != appliedFontScale || library.settings.themeMode != appliedThemeMode) {
             recreate()
             return
         }
@@ -473,10 +476,18 @@ class ImmersiveActivity : Activity() {
             FontScale.adjust(this, up = true)
             textFontScale.text = "界面字体：${FontScale.label(library.settings.fontScale)}"
         }
+        val buttonTheme = view.findViewById<Button>(R.id.menu_theme)
+        buttonTheme.text = "外观：${UiConfig.label(library.settings.themeMode)}"
+        buttonTheme.setOnClickListener {
+            library.settings.themeMode = UiConfig.next(library.settings.themeMode)
+            buttonTheme.text = "外观：${UiConfig.label(library.settings.themeMode)}"
+        }
         view.findViewById<Button>(R.id.menu_close).setOnClickListener { dialog.dismiss() }
-        // 弹窗关闭时若字号已变 → 重建界面按新字号渲染（视频由服务继续播）
+        // 弹窗关闭时若字号/外观已变 → 重建界面生效（视频由服务继续播）
         dialog.setOnDismissListener {
-            if (library.settings.fontScale != appliedFontScale) recreate()
+            if (library.settings.fontScale != appliedFontScale ||
+                library.settings.themeMode != appliedThemeMode
+            ) recreate()
         }
         dialog.show()
     }

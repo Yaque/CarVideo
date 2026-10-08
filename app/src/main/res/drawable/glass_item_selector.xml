@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 分类列表选中/按下态：圆角玻璃高亮 -->
+<!-- 分类列表选中/按下态：圆角玻璃高亮（随昼夜切换，选中态带主题色） -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_activated="true">
         <shape android:shape="rectangle">
             <gradient
                 android:angle="270"
-                android:startColor="#33FFFFFF"
-                android:endColor="#1AFFFFFF" />
+                android:startColor="@color/selector_active_top"
+                android:endColor="@color/selector_active_bottom" />
             <corners android:radius="14dp" />
         </shape>
     </item>
@@ -14,20 +14,20 @@
         <shape android:shape="rectangle">
             <gradient
                 android:angle="270"
-                android:startColor="#33FFFFFF"
-                android:endColor="#1AFFFFFF" />
+                android:startColor="@color/selector_active_top"
+                android:endColor="@color/selector_active_bottom" />
             <corners android:radius="14dp" />
         </shape>
     </item>
     <item android:state_pressed="true">
         <shape android:shape="rectangle">
-            <solid android:color="#22FFFFFF" />
+            <solid android:color="@color/selector_pressed" />
             <corners android:radius="14dp" />
         </shape>
     </item>
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="#00000000" />
+            <solid android:color="@android:color/transparent" />
             <corners android:radius="14dp" />
         </shape>
     </item>

@@ -18,6 +18,7 @@ import com.aiocw.carvideo.R
 import com.aiocw.carvideo.playback.PlaybackService
 import com.aiocw.carvideo.shared.Library
 import com.aiocw.carvideo.shared.model.LibraryScope
+import com.aiocw.carvideo.shared.model.ThemeMode
 import com.aiocw.carvideo.shared.model.VideoEntry
 import com.aiocw.carvideo.ui.glass.GlassBackground
 import java.io.File
@@ -43,18 +44,20 @@ class MainActivity : Activity() {
     private val libraryListener: () -> Unit = { runOnUiThread { render() } }
     private var lastAutoScanAt = 0L
 
-    /** 当前界面应用的字号系数（与设置不一致时重建，全局字号即时生效）。 */
+    /** 当前界面应用的字号系数与外观模式（与设置不一致时重建，全局即时生效）。 */
     private var appliedFontScale = 1f
+    private var appliedThemeMode = ThemeMode.AUTO
 
-    /** 界面字号统一缩放：创建前套用全局字体缩放系数。 */
+    /** 界面外观统一配置：创建前套用字号缩放 + 昼夜模式。 */
     override fun attachBaseContext(newBase: Context) {
-        super.attachBaseContext(FontScale.wrap(newBase))
+        super.attachBaseContext(UiConfig.wrap(newBase))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         library = (application as App).library
         appliedFontScale = library.settings.fontScale
+        appliedThemeMode = library.settings.themeMode
         setContentView(R.layout.activity_main)
 
         categoryList = findViewById(R.id.category_list)
@@ -98,8 +101,8 @@ class MainActivity : Activity() {
 
     override fun onStart() {
         super.onStart()
-        // 字号在设置页/播放菜单被改过 → 重建界面按新字号渲染
-        if (library.settings.fontScale != appliedFontScale) {
+        // 字号/外观在设置页或播放菜单被改过 → 重建界面生效
+        if (library.settings.fontScale != appliedFontScale || library.settings.themeMode != appliedThemeMode) {
             recreate()
             return
         }

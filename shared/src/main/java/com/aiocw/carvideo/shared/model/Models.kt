@@ -37,6 +37,9 @@ enum class PlaybackMode {
 /** 解码模式。 */
 enum class DecodeMode { AUTO, HARDWARE, SOFTWARE }
 
+/** 界面外观模式：白天 / 黑夜 / 跟随系统。 */
+enum class ThemeMode { LIGHT, DARK, AUTO }
+
 /** 画面适配模式（默认 FIT：不拉伸不变形）。 */
 enum class DisplayMode { FIT, FILL, STRETCH }
 

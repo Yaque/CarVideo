@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 白天配色（values-night/colors.xml 为黑夜）：浅色玻璃拟态，深色文字 -->
+<resources>
+    <!-- ===== 文字 / 强调色 ===== -->
+    <color name="text_primary">#1B2436</color>
+    <color name="text_secondary">#4C5A72</color>
+    <color name="text_tertiary">#8493AA</color>
+    <color name="text_on_accent">#FFFFFF</color>
+    <color name="accent">#2F6BFF</color>
+    <color name="accent_soft">#2F5FD8</color>
+    <color name="gold">#A8760F</color>
+    <color name="danger">#C63D3D</color>
+
+    <!-- ===== 玻璃面板（App 界面） ===== -->
+    <color name="glass_panel_top">#B8FFFFFF</color>
+    <color name="glass_panel_bottom">#63FFFFFF</color>
+    <color name="glass_stroke">#335C748F</color>
+
+    <color name="glass_item_top">#A6FFFFFF</color>
+    <color name="glass_item_bottom">#4DFFFFFF</color>
+
+    <color name="glass_button_top">#A6FFFFFF</color>
+    <color name="glass_button_bottom">#3DFFFFFF</color>
+    <color name="glass_button_stroke">#3D5C748F</color>
+    <color name="glass_button_pressed_top">#CCFFFFFF</color>
+    <color name="glass_button_pressed_bottom">#73FFFFFF</color>
+    <color name="glass_button_pressed_stroke">#595C748F</color>
+
+    <color name="glass_drawer_top">#F2FFFFFF</color>
+    <color name="glass_drawer_bottom">#E6F2F7FF</color>
+
+    <color name="selector_active_top">#3D2F6BFF</color>
+    <color name="selector_active_bottom">#262F6BFF</color>
+    <color name="selector_pressed">#223F6288</color>
+
+    <!-- ===== 窗口 / 占位 ===== -->
+    <color name="window_bg_top">#E9EFF9</color>
+    <color name="window_bg_mid">#DCE6F5</color>
+    <color name="window_bg_bottom">#E9EFF9</color>
+    <color name="thumb_placeholder_top">#C6D2E4</color>
+    <color name="thumb_placeholder_bottom">#AEBED6</color>
+
+    <!-- ===== 磨砂叠色（GlassBackground / FrostedDrawable） ===== -->
+    <color name="frost_fill_top">#B8FFFFFF</color>
+    <color name="frost_fill_bottom">#63FFFFFF</color>
+    <color name="frost_stroke">#335C748F</color>
+    <color name="frost_highlight">#4DFFFFFF</color>
+</resources>

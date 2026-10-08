@@ -1,8 +1,8 @@
 <resources>
-    <!-- 深色玻璃主题：无 ActionBar（各页面自带玻璃顶栏），壁纸由 GlassBackground 注入 -->
-    <style name="Theme.CarVideo" parent="android:Theme.Material.NoActionBar">
+    <!-- 浅色玻璃主题（白天）：无 ActionBar（各页面自带玻璃顶栏），壁纸由 GlassBackground 注入 -->
+    <style name="Theme.CarVideo" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@drawable/bg_window</item>
-        <item name="android:statusBarColor">#66000000</item>
-        <item name="android:navigationBarColor">#66000000</item>
+        <item name="android:statusBarColor">#33000000</item>
+        <item name="android:navigationBarColor">#33000000</item>
     </style>
 </resources>

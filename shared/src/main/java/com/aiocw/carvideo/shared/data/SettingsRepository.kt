@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import com.aiocw.carvideo.shared.model.DecodeMode
 import com.aiocw.carvideo.shared.model.DisplayMode
 import com.aiocw.carvideo.shared.model.PlaybackMode
+import com.aiocw.carvideo.shared.model.ThemeMode
 
 /**
  * 应用配置（SharedPreferences 持久化）。
@@ -59,6 +60,12 @@ class SettingsRepository(context: Context) {
         get() = sp.getBoolean(KEY_RESUME, true)
         set(value) = sp.edit().putBoolean(KEY_RESUME, value).apply()
 
+    /** 界面外观：白天 / 黑夜 / 跟随系统（默认跟随系统） */
+    var themeMode: ThemeMode
+        get() = runCatching { ThemeMode.valueOf(sp.getString(KEY_THEME_MODE, ThemeMode.AUTO.name)!!) }
+            .getOrDefault(ThemeMode.AUTO)
+        set(value) = sp.edit().putString(KEY_THEME_MODE, value.name).apply()
+
     /**
      * 界面字体统一缩放（80% ~ 150%，100% 为标准）。
      * 全局唯一字号开关：所有页面/弹窗/列表文字按此系数整体缩放，不随系统字号变化。
@@ -79,6 +86,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_SCAN_ON_MOUNT = "scan_on_mount"
         private const val KEY_AUTO_PLAY_ON_MOUNT = "auto_play_on_mount"
         private const val KEY_RESUME = "resume_playback"
+        private const val KEY_THEME_MODE = "theme_mode"
         private const val KEY_FONT_SCALE = "font_scale"
         private const val KEY_MAX_DEPTH = "max_scan_depth"
 

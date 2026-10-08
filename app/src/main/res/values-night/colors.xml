@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 黑夜配色：深空蓝玻璃拟态，浅色文字（与白天同名 token） -->
+<resources>
+    <!-- ===== 文字 / 强调色 ===== -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#A9B4C9</color>
+    <color name="text_tertiary">#8E9AB2</color>
+    <color name="text_on_accent">#FFFFFF</color>
+    <color name="accent">#B9C9FF</color>
+    <color name="accent_soft">#B9C9FF</color>
+    <color name="gold">#FFD479</color>
+    <color name="danger">#FF9E9E</color>
+
+    <!-- ===== 玻璃面板（App 界面） ===== -->
+    <color name="glass_panel_top">#2EFFFFFF</color>
+    <color name="glass_panel_bottom">#0CFFFFFF</color>
+    <color name="glass_stroke">#33FFFFFF</color>
+
+    <color name="glass_item_top">#24FFFFFF</color>
+    <color name="glass_item_bottom">#0AFFFFFF</color>
+
+    <color name="glass_button_top">#28FFFFFF</color>
+    <color name="glass_button_bottom">#10FFFFFF</color>
+    <color name="glass_button_stroke">#2EFFFFFF</color>
+    <color name="glass_button_pressed_top">#45FFFFFF</color>
+    <color name="glass_button_pressed_bottom">#22FFFFFF</color>
+    <color name="glass_button_pressed_stroke">#4DFFFFFF</color>
+
+    <color name="glass_drawer_top">#F00D1526</color>
+    <color name="glass_drawer_bottom">#E60A1220</color>
+
+    <color name="selector_active_top">#33FFFFFF</color>
+    <color name="selector_active_bottom">#1AFFFFFF</color>
+    <color name="selector_pressed">#22FFFFFF</color>
+
+    <!-- ===== 窗口 / 占位 ===== -->
+    <color name="window_bg_top">#0A0E1F</color>
+    <color name="window_bg_mid">#111B3E</color>
+    <color name="window_bg_bottom">#0B1226</color>
+    <color name="thumb_placeholder_top">#22304D</color>
+    <color name="thumb_placeholder_bottom">#16203A</color>
+
+    <!-- ===== 磨砂叠色（GlassBackground / FrostedDrawable） ===== -->
+    <color name="frost_fill_top">#2EFFFFFF</color>
+    <color name="frost_fill_bottom">#0CFFFFFF</color>
+    <color name="frost_stroke">#33FFFFFF</color>
+    <color name="frost_highlight">#2EFFFFFF</color>
+</resources>

@@ -12,6 +12,7 @@
         android:layout_height="@dimen/thumb_height"
         android:background="@drawable/thumb_placeholder"
         android:contentDescription="封面"
+        android:clipToOutline="true"
         android:scaleType="centerCrop" />
 
     <TextView
@@ -24,7 +25,7 @@
         android:paddingStart="10dp"
         android:paddingTop="6dp"
         android:paddingEnd="10dp"
-        android:textColor="#FFFFFF"
+        android:textColor="@color/text_primary"
         android:textSize="14sp"
         android:textStyle="bold" />
 
@@ -37,7 +38,7 @@
         android:paddingTop="2dp"
         android:paddingEnd="10dp"
         android:singleLine="true"
-        android:textColor="#A9B4C9"
+        android:textColor="@color/text_secondary"
         android:textSize="11sp" />
 
     <!-- 操作按钮：文字介绍下方 -->
@@ -60,7 +61,7 @@
             android:focusable="false"
             android:minHeight="38dp"
             android:text="☆ 收藏"
-            android:textColor="#FFD479"
+            android:textColor="@color/gold"
             android:textSize="12sp" />
 
         <Button
@@ -73,7 +74,7 @@
             android:focusable="false"
             android:minHeight="38dp"
             android:text="删除"
-            android:textColor="#FF9E9E"
+            android:textColor="@color/danger"
             android:textSize="12sp" />
     </LinearLayout>
 </LinearLayout>

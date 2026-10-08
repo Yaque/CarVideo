@@ -17,6 +17,8 @@
 - **上下滑动（抖音式）**：视频随手指 1:1 跟手位移，邻近视频封面随动露出；
   松手按滑动距离 / 甩动速度决定切换或回弹，切换用缩略图衔接首帧，无黑屏；单击暂停/继续
 - **界面字体**：全局统一字号开关（80% ~ 150%，设置页 / 播放菜单均可调），所有页面/弹窗/列表同步缩放
+- **白天 / 黑夜 / 自动**：三套外观随心切换（设置页三选一 / 播放菜单循环），
+  浅色/深色玻璃拟态配色 + 壁纸色调自动适配，选“跟随系统”时随系统昼夜自动切换
 - **播放模式**：单个循环 / 整体顺序循环 / 整体随机循环 / 顺序播完（即"关闭自动连播"）
 - **自动行为**：U 盘插入自动扫描、可选自动随机播放；断点续播
 - **解码**：自动（硬解优先、失败降级软解）/ 强制硬解 / 强制软解
@@ -26,7 +28,8 @@
 ```
 :app      UI + 播放内核
   ui/            MainActivity（管理页）、ImmersiveActivity（抖音式播放页）、SettingsActivity、
-                 FolderPickerDialog、FontScale（全局字号缩放）、ThumbLoader（滑动封面）
+                 FolderPickerDialog、FontScale（全局字号缩放）、UiConfig（字号+昼夜统一配置）、
+                 ThumbLoader（滑动封面）、glass/（毛玻璃基础设施，昼夜双配色）
   playback/      PlaybackService（ExoPlayer + MediaSession）、DecoderSelector、PlayerModes、PlaylistBuilder
   receiver/      MediaMountReceiver（U 盘热插拔）
 :shared   业务/数据层
