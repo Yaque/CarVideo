@@ -2,8 +2,7 @@
 
 包名 `com.aiocw.carvideo`，应用名「车视」。
 
-基于 [Yaque/CarVideo](https://github.com/Yaque/CarVideo)（Android for Cars 模板）改造：
-移除 Android Auto 投屏（`:mobile`）与 Car App Library 模板宿主（CAL 不承载视频 Surface），
+
 `:app` 采用常规 Activity + Media3 架构，可直接运行在 Android 11 车机（后装大屏 / AAOS 均可）。
 
 设计文档：《车机Android11视频播放器-鉴权技术分析.md》（工程根目录）。
