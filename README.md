@@ -12,6 +12,9 @@
 - **分类**：视频源内每个子文件夹 = 一个分类；管理页分文件夹管理
 - **管理页**：全部 / 收藏 / 分类浏览，删除视频（含 U 盘文件），扫描
 - **播放页**：收藏按钮、删除当前视频、播放范围切换（全部 / 收藏 / 任意分类）
+- **上下滑动（抖音式）**：视频随手指 1:1 跟手位移，邻近视频封面随动露出；
+  松手按滑动距离 / 甩动速度决定切换或回弹，切换用缩略图衔接首帧，无黑屏；单击暂停/继续
+- **界面字体**：全局统一字号开关（80% ~ 150%，设置页 / 播放菜单均可调），所有页面/弹窗/列表同步缩放
 - **播放模式**：单个循环 / 整体顺序循环 / 整体随机循环 / 顺序播完（即"关闭自动连播"）
 - **自动行为**：U 盘插入自动扫描、可选自动随机播放；断点续播
 - **解码**：自动（硬解优先、失败降级软解）/ 强制硬解 / 强制软解
@@ -20,7 +23,8 @@
 
 ```
 :app      UI + 播放内核
-  ui/            MainActivity（管理页）、PlayerActivity（播放页）、SettingsActivity、FolderPickerDialog
+  ui/            MainActivity（管理页）、ImmersiveActivity（抖音式播放页）、SettingsActivity、
+                 FolderPickerDialog、FontScale（全局字号缩放）、ThumbLoader（滑动封面）
   playback/      PlaybackService（ExoPlayer + MediaSession）、DecoderSelector、PlayerModes、PlaylistBuilder
   receiver/      MediaMountReceiver（U 盘热插拔）
 :shared   业务/数据层

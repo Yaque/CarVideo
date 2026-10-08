@@ -59,6 +59,14 @@ class SettingsRepository(context: Context) {
         get() = sp.getBoolean(KEY_RESUME, true)
         set(value) = sp.edit().putBoolean(KEY_RESUME, value).apply()
 
+    /**
+     * 界面字体统一缩放（80% ~ 150%，100% 为标准）。
+     * 全局唯一字号开关：所有页面/弹窗/列表文字按此系数整体缩放，不随系统字号变化。
+     */
+    var fontScale: Float
+        get() = sp.getFloat(KEY_FONT_SCALE, 1.0f).coerceIn(FONT_SCALE_MIN, FONT_SCALE_MAX)
+        set(value) = sp.edit().putFloat(KEY_FONT_SCALE, value.coerceIn(FONT_SCALE_MIN, FONT_SCALE_MAX)).apply()
+
     /** 扫描递归深度限制（防大目录卡顿） */
     val maxScanDepth: Int get() = sp.getInt(KEY_MAX_DEPTH, 3)
 
@@ -71,6 +79,11 @@ class SettingsRepository(context: Context) {
         private const val KEY_SCAN_ON_MOUNT = "scan_on_mount"
         private const val KEY_AUTO_PLAY_ON_MOUNT = "auto_play_on_mount"
         private const val KEY_RESUME = "resume_playback"
+        private const val KEY_FONT_SCALE = "font_scale"
         private const val KEY_MAX_DEPTH = "max_scan_depth"
+
+        const val FONT_SCALE_MIN = 0.8f
+        const val FONT_SCALE_MAX = 1.5f
+        const val FONT_SCALE_STEP = 0.1f
     }
 }

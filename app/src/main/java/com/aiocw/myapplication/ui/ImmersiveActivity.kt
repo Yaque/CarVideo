@@ -3,20 +3,26 @@ package com.aiocw.myapplication.ui
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.MotionEvent
+import android.view.VelocityTracker
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.WindowInsets
 import android.view.WindowInsetsController
+import android.view.animation.DecelerateInterpolator
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.ListView
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -42,7 +48,8 @@ import kotlin.random.Random
 
 /**
  * 统一抖音式播放页（启动页 / 管理页点击进入 共用本页）：
- * - 上滑 / 下滑：带动画切换下一个 / 上一个视频；
+ * - 上滑 / 下滑：抖音式跟手切换下一个 / 上一个视频（画面随手指 1:1 位移，
+ *   邻近视频封面随动露出；松手按距离/速度决定切换或回弹，切换时无黑屏闪动）；
  * - 右滑：打开播放列表抽屉（当前列表 + 播放范围：全部/收藏/分类）；左滑或轻点关闭；
  * - 右侧悬浮列：收藏（抖音式直接在页面上）+ 菜单（播放设置弹窗：画面适配/解码/播放模式/删除当前视频/更多）；
  * - 启动进入（无指定视频）：全屏随机播放；从管理页进入：按指定范围与条目起播；
@@ -51,8 +58,12 @@ import kotlin.random.Random
 class ImmersiveActivity : Activity() {
 
     private lateinit var library: Library
+    private lateinit var pages: View
     private lateinit var content: View
     private lateinit var playerView: PlayerView
+    private lateinit var previewPrev: ImageView
+    private lateinit var previewNext: ImageView
+    private lateinit var previewCurrent: ImageView
     private lateinit var textTitle: TextView
     private lateinit var textHint: TextView
     private lateinit var btnFavorite: Button
@@ -73,11 +84,15 @@ class ImmersiveActivity : Activity() {
     private var startKey: String? = null
     private var startIndex: Int = 0
     private var fromLaunch = false       // 启动进入 = 随机播放
-    private var switching = false
     private var drawerOpen = false
     private var seekDragging = false
+    private var restoredAfterRecreate = false   // 重建恢复：不重播起播条目，接着当前进度播
+
+    /** 当前界面应用的字号系数（与设置不一致时重建，全局字号即时生效）。 */
+    private var appliedFontScale = 1f
 
     private val hideHintRunnable = Runnable { textHint.visibility = View.GONE }
+    private val hideCurrentPlaceholderRunnable = Runnable { hideCurrentPlaceholder() }
     private val progressHandler = Handler(Looper.getMainLooper())
 
     /** 进度条周期刷新（秒级粒度，避免 duration 未就绪时的异常值）。 */
@@ -94,15 +109,24 @@ class ImmersiveActivity : Activity() {
         }
     }
 
-    // 手势判定（纯事件计算）
+    // 手势判定（抖音式：上下跟手切换 / 右滑抽屉 / 单击暂停继续）
     private var downY = 0f
     private var downX = 0f
     private var downAt = 0L
+    private var dragMode = DRAG_NONE
+    private var velocityTracker: VelocityTracker? = null
+    private var gestureToken = 0      // 手势代次：动画被打断后旧收尾回调作废
+    private val touchSlop by lazy { ViewConfiguration.get(this).scaledTouchSlop }
+    private val drawerThreshold by lazy { 110f * resources.displayMetrics.density }
 
     private val playerListener = object : Player.Listener {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) = refreshChrome()
         override fun onIsPlayingChanged(isPlaying: Boolean) = refreshChrome()
         override fun onPlaybackStateChanged(playbackState: Int) = refreshChrome()
+        override fun onEvents(player: Player, events: Player.Events) {
+            // 新视频首帧渲染完成 → 收起切换瞬间的缩略图占位
+            if (events.contains(Player.EVENT_RENDERED_FIRST_FRAME)) hideCurrentPlaceholder()
+        }
         override fun onPlayerError(error: PlaybackException) {
             // 错误提示短暂显示后同样自动收起
             textHint.text = "播放失败（错误码 ${error.errorCode}），已跳到下一个"
@@ -112,12 +136,23 @@ class ImmersiveActivity : Activity() {
         }
     }
 
+    /** 界面字号统一缩放：创建前套用全局字体缩放系数（所有页面/弹窗/列表一致）。 */
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(FontScale.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         library = (application as App).library
+        appliedFontScale = library.settings.fontScale
+        restoredAfterRecreate = savedInstanceState != null   // 字号调整等重建：不跳回原起播条目
         setContentView(R.layout.activity_immersive)
         enterImmersive()
 
+        pages = findViewById(R.id.pages)
+        previewPrev = findViewById(R.id.preview_prev)
+        previewNext = findViewById(R.id.preview_next)
+        previewCurrent = findViewById(R.id.preview_current)
         content = findViewById(R.id.content)
         playerView = findViewById(R.id.player_view)
         textTitle = findViewById(R.id.text_title)
@@ -154,6 +189,11 @@ class ImmersiveActivity : Activity() {
 
     override fun onStart() {
         super.onStart()
+        // 字号在设置页/播放菜单被改过 → 重建界面按新字号渲染（播放不中断，服务继续播）
+        if (library.settings.fontScale != appliedFontScale) {
+            recreate()
+            return
+        }
         progressHandler.post(progressTick)   // 可见时才刷进度条
     }
 
@@ -165,6 +205,9 @@ class ImmersiveActivity : Activity() {
     override fun onDestroy() {
         progressHandler.removeCallbacks(progressTick)
         textHint.removeCallbacks(hideHintRunnable)
+        pages.removeCallbacks(hideCurrentPlaceholderRunnable)
+        velocityTracker?.recycle()
+        velocityTracker = null
         controller?.removeListener(playerListener)
         playerView.player = null
         controllerFuture?.let { MediaController.releaseFuture(it) }
@@ -199,7 +242,7 @@ class ImmersiveActivity : Activity() {
                     // 服务已有播放列表：确保继续播；若带指定条目（管理页点击）则跳过去
                     if (c.playbackState == Player.STATE_IDLE) c.prepare()
                     if (!c.isPlaying) c.play()
-                    if (startKey != null) jumpOrRebuild(c) else refreshChrome()
+                    if (!restoredAfterRecreate && startKey != null) jumpOrRebuild(c) else refreshChrome()
                 }
             }.onFailure {
                 textHint.text = "播放服务连接失败"
@@ -420,7 +463,21 @@ class ImmersiveActivity : Activity() {
             dialog.dismiss()
             gotoHome()
         }
+        val textFontScale = view.findViewById<TextView>(R.id.text_font_scale)
+        textFontScale.text = "界面字体：${FontScale.label(library.settings.fontScale)}"
+        view.findViewById<Button>(R.id.menu_font_down).setOnClickListener {
+            FontScale.adjust(this, up = false)
+            textFontScale.text = "界面字体：${FontScale.label(library.settings.fontScale)}"
+        }
+        view.findViewById<Button>(R.id.menu_font_up).setOnClickListener {
+            FontScale.adjust(this, up = true)
+            textFontScale.text = "界面字体：${FontScale.label(library.settings.fontScale)}"
+        }
         view.findViewById<Button>(R.id.menu_close).setOnClickListener { dialog.dismiss() }
+        // 弹窗关闭时若字号已变 → 重建界面按新字号渲染（视频由服务继续播）
+        dialog.setOnDismissListener {
+            if (library.settings.fontScale != appliedFontScale) recreate()
+        }
         dialog.show()
     }
 
@@ -513,58 +570,173 @@ class ImmersiveActivity : Activity() {
         content.animate().translationX(0f).setDuration(DRAWER_ANIM_MS).start()
     }
 
-    // ---------- 手势：上下切换（带动画）/ 右滑列表 / 单击暂停继续 ----------
+    // ---------- 手势：抖音式跟手上下切换 / 右滑列表 / 单击暂停继续 ----------
 
     private fun setupGestures() {
-        playerView.setOnTouchListener { _: View, event: MotionEvent ->
-            when (event.actionMasked) {
-                MotionEvent.ACTION_DOWN -> {
-                    downX = event.rawX
-                    downY = event.rawY
-                    downAt = System.currentTimeMillis()
-                    true
-                }
-                MotionEvent.ACTION_UP -> {
-                    val dx = event.rawX - downX
-                    val dy = event.rawY - downY
-                    val dt = System.currentTimeMillis() - downAt
-                    val threshold = 110 * resources.displayMetrics.density
-                    when {
-                        abs(dx) > threshold && abs(dx) > abs(dy) * 1.5 ->
-                            if (dx > 0) openDrawer() else closeDrawer()
-                        abs(dy) > threshold && abs(dy) >= abs(dx) -> animateSwitch(next = dy < 0)
-                        abs(dx) < threshold && abs(dy) < threshold && dt < 400 ->
-                            if (drawerOpen) closeDrawer() else togglePlayPause()
-                    }
-                    true
-                }
-                else -> true
-            }
-        }
+        playerView.setOnTouchListener { _, event -> onPlayerTouch(event) }
     }
 
-    /** 抖音式转场：当前画面滑出 → 切换条目 → 新画面从反方向滑入。 */
-    private fun animateSwitch(next: Boolean) {
-        val c = controller ?: return
-        if (switching || c.mediaItemCount <= 1) return
-        switching = true
-        val h = content.height.toFloat().coerceAtLeast(1f)
-        content.animate().cancel()
-        content.animate()
-            .translationY(if (next) -h else h)
-            .alpha(0f)
-            .setDuration(ANIM_MS)
+    /**
+     * 上下滑动完全跟手：内容层（当前视频 + 上下邻近封面）随手指 1:1 位移；
+     * 松手按滑动距离 / 甩动速度决定切换或回弹，收尾动画速度也跟随手指速度。
+     */
+    private fun onPlayerTouch(event: MotionEvent): Boolean {
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                gestureToken++                       // 手指一按即接管，旧收尾回调作废
+                pages.animate().cancel()
+                downX = event.rawX
+                downY = event.rawY
+                downAt = System.currentTimeMillis()
+                dragMode = DRAG_NONE
+                velocityTracker?.recycle()
+                velocityTracker = VelocityTracker.obtain().apply { addMovement(event) }
+            }
+
+            MotionEvent.ACTION_MOVE -> {
+                velocityTracker?.addMovement(event)
+                if (dragMode == DRAG_NONE) {
+                    val dx = event.rawX - downX
+                    val dy = event.rawY - downY
+                    if (abs(dx) > touchSlop || abs(dy) > touchSlop) {
+                        // 先动得多的方向定手势：上下 = 切换视频，左右 = 抽屉
+                        dragMode = if (abs(dy) >= abs(dx)) DRAG_VERTICAL else DRAG_HORIZONTAL
+                        if (dragMode == DRAG_VERTICAL) bindPreviews()
+                    }
+                }
+                if (dragMode == DRAG_VERTICAL) {
+                    val h = pages.height.toFloat().coerceAtLeast(1f)
+                    var dy = event.rawY - downY
+                    // 无可切换方向（只有一个视频）→ 橡皮筋阻尼，松手回弹
+                    if (neighborIndex(next = dy < 0) < 0) dy *= RUBBER_BAND
+                    pages.translationY = dy.coerceIn(-h, h)
+                }
+            }
+
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                velocityTracker?.addMovement(event)
+                velocityTracker?.computeCurrentVelocity(1000)
+                val vy = velocityTracker?.yVelocity ?: 0f
+                velocityTracker?.recycle()
+                velocityTracker = null
+
+                val dx = event.rawX - downX
+                val dy = event.rawY - downY
+                val dt = System.currentTimeMillis() - downAt
+                when (dragMode) {
+                    DRAG_VERTICAL -> settleVertical(vy, cancelled = event.actionMasked == MotionEvent.ACTION_CANCEL)
+                    DRAG_HORIZONTAL ->
+                        if (abs(dx) > drawerThreshold && abs(dx) > abs(dy) * 1.5) {
+                            if (dx > 0) openDrawer() else closeDrawer()
+                        }
+                    else ->
+                        if (abs(dx) < touchSlop && abs(dy) < touchSlop && dt < 400) {
+                            if (drawerOpen) closeDrawer() else togglePlayPause()
+                        }
+                }
+                dragMode = DRAG_NONE
+            }
+        }
+        return true
+    }
+
+    /** 松手收尾：距离/速度任一达标即切换，否则回弹；收尾时长随剩余距离与手指速度。 */
+    private fun settleVertical(vy: Float, cancelled: Boolean) {
+        val h = pages.height.toFloat().coerceAtLeast(1f)
+        val dy = pages.translationY
+        val next = dy < 0
+        val target = if (cancelled) -1 else neighborIndex(next)
+        val velocity = abs(vy)
+        val sameDirection = if (next) vy < 0 else vy > 0
+        val complete = target >= 0 &&
+            (abs(dy) > h * SWITCH_RATIO || (sameDirection && velocity > h * FLING_RATIO))
+        val endY = if (complete) (if (next) -h else h) else 0f
+        val remaining = abs(endY - dy)
+        // 速度取手指速度与基准速度的较大者：快甩收尾短，慢拖也不拖沓
+        val speed = maxOf(velocity, h * 1.2f)
+        val duration = ((remaining / speed) * 1000f).toLong().coerceIn(120, 320)
+        val token = ++gestureToken
+        pages.animate()
+            .translationY(endY)
+            .setDuration(duration)
+            .setInterpolator(DecelerateInterpolator())
             .withEndAction {
-                if (next) c.seekToNextMediaItem() else c.seekToPreviousMediaItem()
-                content.translationY = if (next) h else -h
-                content.animate()
-                    .translationY(0f)
-                    .alpha(1f)
-                    .setDuration(ANIM_MS)
-                    .withEndAction { switching = false }
-                    .start()
+                if (token != gestureToken) return@withEndAction   // 已被新手势打断
+                if (complete) switchToNeighbor(target) else hidePreviews()
             }
             .start()
+    }
+
+    /** 切换到目标条目并复位页面；用缩略图盖住首帧前的空窗，滑过去无黑屏。 */
+    private fun switchToNeighbor(target: Int) {
+        val c = controller
+        if (c == null || target < 0) {
+            hidePreviews()
+            return
+        }
+        val entry = entryAt(target)
+        ThumbLoader.load(this, entry, previewCurrent)
+        previewCurrent.visibility = View.VISIBLE
+        previewCurrent.alpha = 1f
+        c.seekTo(target, 0L)
+
+        val h = pages.height.toFloat().coerceAtLeast(1f)
+        pages.translationY = 0f                 // 新视频已在中央
+        previewPrev.translationY = -h
+        previewNext.translationY = h
+        hidePreviews()
+        pages.removeCallbacks(hideCurrentPlaceholderRunnable)
+        pages.postDelayed(hideCurrentPlaceholderRunnable, PLACEHOLDER_TIMEOUT_MS)
+        refreshChrome()
+    }
+
+    /** 绑定上下邻近视频封面并放到页面栈两侧（随动露出）。 */
+    private fun bindPreviews() {
+        val h = pages.height.toFloat().coerceAtLeast(1f)
+        previewPrev.translationY = -h
+        previewNext.translationY = h
+        ThumbLoader.load(this, entryAt(neighborIndex(false)), previewPrev)
+        ThumbLoader.load(this, entryAt(neighborIndex(true)), previewNext)
+        previewPrev.visibility = View.VISIBLE
+        previewNext.visibility = View.VISIBLE
+    }
+
+    private fun hidePreviews() {
+        previewPrev.visibility = View.GONE
+        previewNext.visibility = View.GONE
+    }
+
+    private fun hideCurrentPlaceholder() {
+        pages.removeCallbacks(hideCurrentPlaceholderRunnable)
+        if (previewCurrent.visibility != View.VISIBLE) return
+        previewCurrent.animate()
+            .alpha(0f)
+            .setDuration(160)
+            .withEndAction {
+                previewCurrent.visibility = View.GONE
+                previewCurrent.alpha = 1f
+            }
+            .start()
+    }
+
+    /** 上/下一个条目索引：跟随播放器顺序（随机模式即随机序列），退化时循环接龙。 */
+    private fun neighborIndex(next: Boolean): Int {
+        val c = controller ?: return -1
+        val count = c.mediaItemCount
+        if (count <= 1) return -1
+        val cur = c.currentMediaItemIndex
+        val idx = if (next) c.nextMediaItemIndex else c.previousMediaItemIndex
+        if (idx != C.INDEX_UNSET && idx in 0 until count && idx != cur) return idx
+        return if (next) (cur + 1) % count else (cur - 1 + count) % count
+    }
+
+    private fun entryAt(index: Int): VideoEntry? {
+        val c = controller ?: return null
+        if (index < 0 || index >= c.mediaItemCount) return null
+        val item = c.getMediaItemAt(index) ?: return null
+        val key = item.mediaId
+        entries.firstOrNull { it.key == key }?.let { return it }
+        return keyToEntry(key, item.mediaMetadata?.title?.toString())
     }
 
     /** 单击：暂停 / 继续（抖音式），中央显示大 ▶ 图标。 */
@@ -624,8 +796,16 @@ class ImmersiveActivity : Activity() {
         const val EXTRA_START_KEY = "***"
         const val EXTRA_START_INDEX = "start_index"
 
-        private const val ANIM_MS = 220L
         private const val DRAWER_ANIM_MS = 200L
         private const val HINT_SHOW_MS = 4_000L
+        private const val PLACEHOLDER_TIMEOUT_MS = 1_200L   // 缩略图占位兜底隐藏时长
+
+        private const val DRAG_NONE = 0
+        private const val DRAG_VERTICAL = 1
+        private const val DRAG_HORIZONTAL = 2
+
+        private const val RUBBER_BAND = 0.3f   // 无可切换方向时的阻尼系数
+        private const val SWITCH_RATIO = 0.22f // 滑过屏幕该比例即切换
+        private const val FLING_RATIO = 0.5f   // 甩动速度超过 半屏/秒 即切换
     }
 }

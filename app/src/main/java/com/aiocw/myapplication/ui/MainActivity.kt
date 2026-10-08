@@ -2,6 +2,7 @@ package com.aiocw.myapplication.ui
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -42,9 +43,18 @@ class MainActivity : Activity() {
     private val libraryListener: () -> Unit = { runOnUiThread { render() } }
     private var lastAutoScanAt = 0L
 
+    /** 当前界面应用的字号系数（与设置不一致时重建，全局字号即时生效）。 */
+    private var appliedFontScale = 1f
+
+    /** 界面字号统一缩放：创建前套用全局字体缩放系数。 */
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(FontScale.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         library = (application as App).library
+        appliedFontScale = library.settings.fontScale
         setContentView(R.layout.activity_main)
 
         categoryList = findViewById(R.id.category_list)
@@ -88,6 +98,11 @@ class MainActivity : Activity() {
 
     override fun onStart() {
         super.onStart()
+        // 字号在设置页/播放菜单被改过 → 重建界面按新字号渲染
+        if (library.settings.fontScale != appliedFontScale) {
+            recreate()
+            return
+        }
         ensurePermission()
         render()
         // 兑底：即使热插拔广播被 ROM 吞掉，打开页面也保证数据是新的（5s 节流）

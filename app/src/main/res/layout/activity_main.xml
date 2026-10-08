@@ -31,9 +31,10 @@
         <Button
             android:id="@+id/btn_scan"
             android:layout_width="wrap_content"
-            android:layout_height="46dp"
+            android:layout_height="wrap_content"
             android:layout_marginEnd="10dp"
             android:background="@drawable/glass_button"
+            android:minHeight="46dp"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
             android:text="扫描"
@@ -43,8 +44,9 @@
         <Button
             android:id="@+id/btn_settings"
             android:layout_width="wrap_content"
-            android:layout_height="46dp"
+            android:layout_height="wrap_content"
             android:background="@drawable/glass_button_accent"
+            android:minHeight="46dp"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
             android:text="设置"

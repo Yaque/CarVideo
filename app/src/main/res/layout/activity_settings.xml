@@ -21,9 +21,10 @@
             <Button
                 android:id="@+id/btn_back"
                 android:layout_width="wrap_content"
-                android:layout_height="48dp"
+                android:layout_height="wrap_content"
                 android:layout_marginEnd="12dp"
                 android:background="@drawable/glass_button"
+                android:minHeight="48dp"
                 android:paddingStart="22dp"
                 android:paddingEnd="22dp"
                 android:text="←"
@@ -75,8 +76,9 @@
                 <Button
                     android:id="@+id/btn_permission"
                     android:layout_width="wrap_content"
-                    android:layout_height="44dp"
+                    android:layout_height="wrap_content"
                     android:background="@drawable/glass_button_accent"
+                    android:minHeight="44dp"
                     android:paddingStart="20dp"
                     android:paddingEnd="20dp"
                     android:text="去授权"
@@ -113,9 +115,10 @@
             <Button
                 android:id="@+id/btn_add_source"
                 android:layout_width="match_parent"
-                android:layout_height="46dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:background="@drawable/glass_button"
+                android:minHeight="46dp"
                 android:text="＋ 添加视频源文件夹…"
                 android:textColor="#EDF2FB"
                 android:textSize="15sp" />
@@ -182,8 +185,9 @@
                 <Button
                     android:id="@+id/btn_decode_mode"
                     android:layout_width="wrap_content"
-                    android:layout_height="44dp"
+                    android:layout_height="wrap_content"
                     android:background="@drawable/glass_button"
+                    android:minHeight="44dp"
                     android:paddingStart="20dp"
                     android:paddingEnd="20dp"
                     android:text="切换"
@@ -228,8 +232,9 @@
                 <Button
                     android:id="@+id/btn_display_mode"
                     android:layout_width="wrap_content"
-                    android:layout_height="44dp"
+                    android:layout_height="wrap_content"
                     android:background="@drawable/glass_button"
+                    android:minHeight="44dp"
                     android:paddingStart="20dp"
                     android:paddingEnd="20dp"
                     android:text="切换"
@@ -255,8 +260,9 @@
                 <Button
                     android:id="@+id/btn_default_mode"
                     android:layout_width="wrap_content"
-                    android:layout_height="44dp"
+                    android:layout_height="wrap_content"
                     android:background="@drawable/glass_button"
+                    android:minHeight="44dp"
                     android:paddingStart="20dp"
                     android:paddingEnd="20dp"
                     android:text="切换"
@@ -272,6 +278,89 @@
                 android:text="记住上次播放模式（否则用默认值）"
                 android:textColor="#E8EEF9"
                 android:textSize="15sp" />
+        </LinearLayout>
+
+        <!-- 界面字体卡片：全局唯一字号开关，所有页面文字统一缩放，立即生效 -->
+        <LinearLayout
+            android:id="@+id/card_font"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/glass_panel"
+            android:orientation="vertical"
+            android:padding="18dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="界面字体"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="6dp"
+                android:text="所有界面文字统一缩放（80% ~ 150%），调整后立即生效"
+                android:textColor="#C9D2E3"
+                android:textSize="14sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingTop="10dp">
+
+                <Button
+                    android:id="@+id/btn_font_down"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/glass_button"
+                    android:minHeight="44dp"
+                    android:text="A−"
+                    android:textColor="#E8EEF9"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:id="@+id/text_font_scale"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="100%"
+                    android:textColor="#FFFFFF"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/btn_font_up"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/glass_button"
+                    android:minHeight="44dp"
+                    android:text="A＋"
+                    android:textColor="#E8EEF9"
+                    android:textSize="15sp" />
+
+                <Button
+                    android:id="@+id/btn_font_reset"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/glass_button"
+                    android:minHeight="44dp"
+                    android:text="默认"
+                    android:textColor="#EDF2FB"
+                    android:textSize="15sp" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

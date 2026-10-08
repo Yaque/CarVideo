@@ -6,92 +6,133 @@
     android:layout_height="match_parent"
     android:background="#000000">
 
-    <!-- 可整体滑动动画的内容层 -->
+    <!--
+      上下滑动页栈（抖音式）：
+      中间 = 当前视频内容层，上下 = 邻近视频封面，整体随手指 1:1 位移（跟手）；
+      松手按距离/速度决定切换或回弹，切换完成后复位到下一个视频。
+    -->
     <FrameLayout
-        android:id="@+id/content"
+        android:id="@+id/pages"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <androidx.media3.ui.PlayerView
-            android:id="@+id/player_view"
+        <!-- 上一个视频封面（滑动时从顶部随动露出） -->
+        <ImageView
+            android:id="@+id/preview_prev"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:resize_mode="fit"
-            app:show_buffering="when_playing"
-            app:surface_type="surface_view"
-            app:use_controller="false" />
-
-        <TextView
-            android:id="@+id/text_title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:layout_marginBottom="58dp"
-            android:ellipsize="end"
-            android:gravity="center"
-            android:paddingStart="24dp"
-            android:paddingEnd="24dp"
-            android:singleLine="true"
-            android:shadowColor="#88000000"
-            android:shadowRadius="10"
-            android:textColor="#FFFFFF"
-            android:textSize="15sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/text_hint"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center_horizontal"
-            android:layout_marginBottom="100dp"
-            android:background="@drawable/glass_item"
-            android:paddingStart="18dp"
-            android:paddingTop="8dp"
-            android:paddingEnd="18dp"
-            android:paddingBottom="8dp"
-            android:shadowColor="#88000000"
-            android:shadowRadius="10"
-            android:text="上滑/下滑 切换 · 右滑 播放列表 · 单击 暂停/继续"
-            android:textColor="#E8EEF9"
-            android:textSize="13sp" />
-
-        <!-- 底部进度条（可拖动定位） -->
-        <SeekBar
-            android:id="@+id/seek_progress"
-            android:layout_width="match_parent"
-            android:layout_height="40dp"
-            android:layout_gravity="bottom"
-            android:layout_marginStart="88dp"
-            android:layout_marginEnd="16dp"
-            android:layout_marginBottom="8dp"
-            android:progressTint="#8FB8FF"
-            android:thumbTint="#FFFFFF" />
-
-        <!-- 单击暂停时的中央图标（玻璃圆钮，与整体 UI 统一） -->
-        <TextView
-            android:id="@+id/text_pause"
-            android:layout_width="84dp"
-            android:layout_height="84dp"
-            android:layout_gravity="center"
-            android:background="@drawable/glass_circle"
-            android:gravity="center"
-            android:shadowColor="#99000000"
-            android:shadowRadius="14"
-            android:text="▶"
-            android:textColor="#FFFFFF"
-            android:textSize="32sp"
+            android:contentDescription="上一个视频封面"
+            android:scaleType="centerCrop"
             android:visibility="gone" />
+
+        <!-- 下一个视频封面（滑动时从底部随动露出） -->
+        <ImageView
+            android:id="@+id/preview_next"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="下一个视频封面"
+            android:scaleType="centerCrop"
+            android:visibility="gone" />
+
+        <!-- 切换瞬间的当前视频缩略图（垫在视频层下，新视频首帧前透出，避免黑屏闪动） -->
+        <ImageView
+            android:id="@+id/preview_current"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="当前视频封面"
+            android:scaleType="centerCrop"
+            android:visibility="gone" />
+
+        <!-- 当前视频内容层（可整体滑动动画） -->
+        <FrameLayout
+            android:id="@+id/content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <!-- texture_view：视图位移/透明度与画面同步，滑动切换不撕裂、不脱拍 -->
+            <androidx.media3.ui.PlayerView
+                android:id="@+id/player_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:resize_mode="fit"
+                app:show_buffering="when_playing"
+                app:surface_type="texture_view"
+                app:use_controller="false" />
+
+            <TextView
+                android:id="@+id/text_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:layout_marginBottom="58dp"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:paddingStart="24dp"
+                android:paddingEnd="24dp"
+                android:singleLine="true"
+                android:shadowColor="#88000000"
+                android:shadowRadius="10"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/text_hint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|center_horizontal"
+                android:layout_marginBottom="100dp"
+                android:background="@drawable/glass_item"
+                android:paddingStart="18dp"
+                android:paddingTop="8dp"
+                android:paddingEnd="18dp"
+                android:paddingBottom="8dp"
+                android:shadowColor="#88000000"
+                android:shadowRadius="10"
+                android:text="上滑/下滑 切换 · 右滑 播放列表 · 单击 暂停/继续"
+                android:textColor="#E8EEF9"
+                android:textSize="13sp" />
+
+            <!-- 底部进度条（可拖动定位） -->
+            <SeekBar
+                android:id="@+id/seek_progress"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_gravity="bottom"
+                android:layout_marginStart="88dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="8dp"
+                android:progressTint="#8FB8FF"
+                android:thumbTint="#FFFFFF" />
+
+            <!-- 单击暂停时的中央图标（玻璃圆钮，与整体 UI 统一） -->
+            <TextView
+                android:id="@+id/text_pause"
+                android:layout_width="84dp"
+                android:layout_height="84dp"
+                android:layout_gravity="center"
+                android:background="@drawable/glass_circle"
+                android:gravity="center"
+                android:shadowColor="#99000000"
+                android:shadowRadius="14"
+                android:text="▶"
+                android:textColor="#FFFFFF"
+                android:textSize="32sp"
+                android:visibility="gone" />
+        </FrameLayout>
     </FrameLayout>
 
     <!-- 左上：收藏（抖音式直接在页面上） -->
     <Button
         android:id="@+id/btn_favorite"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_gravity="top|start"
         android:layout_marginTop="14dp"
         android:layout_marginStart="16dp"
         android:background="@drawable/glass_button"
+        android:minWidth="56dp"
+        android:minHeight="56dp"
         android:text="☆"
         android:textColor="#FFD479"
         android:textSize="24sp" />
@@ -100,11 +141,12 @@
     <Button
         android:id="@+id/btn_menu"
         android:layout_width="wrap_content"
-        android:layout_height="52dp"
+        android:layout_height="wrap_content"
         android:layout_gravity="bottom|start"
         android:layout_marginBottom="18dp"
         android:layout_marginStart="16dp"
         android:background="@drawable/glass_button"
+        android:minHeight="52dp"
         android:paddingStart="18dp"
         android:paddingEnd="18dp"
         android:text="更多"
@@ -115,11 +157,12 @@
     <Button
         android:id="@+id/btn_playlist"
         android:layout_width="wrap_content"
-        android:layout_height="52dp"
+        android:layout_height="wrap_content"
         android:layout_gravity="top|end"
         android:layout_marginTop="14dp"
         android:layout_marginEnd="16dp"
         android:background="@drawable/glass_button"
+        android:minHeight="52dp"
         android:paddingStart="18dp"
         android:paddingEnd="18dp"
         android:text="列表"
@@ -154,9 +197,11 @@
 
             <Button
                 android:id="@+id/btn_close_drawer"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:background="@drawable/glass_button"
+                android:minWidth="42dp"
+                android:minHeight="42dp"
                 android:text="✕"
                 android:textColor="#E8EEF9"
                 android:textSize="15sp" />
@@ -172,10 +217,11 @@
             <Button
                 android:id="@+id/btn_scope_all"
                 android:layout_width="0dp"
-                android:layout_height="42dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="6dp"
                 android:background="@drawable/glass_button"
+                android:minHeight="42dp"
                 android:text="全部"
                 android:textColor="#E8EEF9"
                 android:textSize="13sp" />
@@ -183,10 +229,11 @@
             <Button
                 android:id="@+id/btn_scope_fav"
                 android:layout_width="0dp"
-                android:layout_height="42dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="6dp"
                 android:background="@drawable/glass_button"
+                android:minHeight="42dp"
                 android:text="收藏"
                 android:textColor="#FFD479"
                 android:textSize="13sp" />
@@ -194,9 +241,10 @@
             <Button
                 android:id="@+id/btn_scope_cat"
                 android:layout_width="0dp"
-                android:layout_height="42dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:background="@drawable/glass_button"
+                android:minHeight="42dp"
                 android:text="分类…"
                 android:textColor="#B9C9FF"
                 android:textSize="13sp" />

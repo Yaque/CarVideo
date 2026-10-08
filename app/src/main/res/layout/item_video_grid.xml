@@ -53,11 +53,12 @@
         <Button
             android:id="@+id/btn_favorite"
             android:layout_width="0dp"
-            android:layout_height="38dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginEnd="4dp"
             android:background="@drawable/glass_button"
             android:focusable="false"
+            android:minHeight="38dp"
             android:text="☆ 收藏"
             android:textColor="#FFD479"
             android:textSize="12sp" />
@@ -65,11 +66,12 @@
         <Button
             android:id="@+id/btn_delete"
             android:layout_width="0dp"
-            android:layout_height="38dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginStart="4dp"
             android:background="@drawable/glass_button"
             android:focusable="false"
+            android:minHeight="38dp"
             android:text="删除"
             android:textColor="#FF9E9E"
             android:textSize="12sp" />

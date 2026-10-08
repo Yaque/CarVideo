@@ -2,6 +2,7 @@ package com.aiocw.myapplication.ui
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -33,10 +34,20 @@ class SettingsActivity : Activity() {
     private lateinit var textDecodeMode: TextView
     private lateinit var textDisplayMode: TextView
     private lateinit var textDefaultMode: TextView
+    private lateinit var textFontScale: TextView
+
+    /** 当前界面应用的字号系数（与设置不一致时重建，字号即时生效）。 */
+    private var appliedFontScale = 1f
+
+    /** 界面字号统一缩放：创建前套用全局字体缩放系数。 */
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(FontScale.wrap(newBase))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         library = (application as App).library
+        appliedFontScale = library.settings.fontScale
         setContentView(R.layout.activity_settings)
 
         textPermission = findViewById(R.id.text_permission)
@@ -44,6 +55,7 @@ class SettingsActivity : Activity() {
         textDecodeMode = findViewById(R.id.text_decode_mode)
         textDisplayMode = findViewById(R.id.text_display_mode)
         textDefaultMode = findViewById(R.id.text_default_mode)
+        textFontScale = findViewById(R.id.text_font_scale)
 
         // 毛玻璃 UI：壁纸 + 各卡片真磨砂
         GlassBackground.install(this)
@@ -51,6 +63,7 @@ class SettingsActivity : Activity() {
         GlassBackground.frost(this, findViewById(R.id.card_sources), 22f)
         GlassBackground.frost(this, findViewById(R.id.card_decode), 22f)
         GlassBackground.frost(this, findViewById(R.id.card_play), 22f)
+        GlassBackground.frost(this, findViewById(R.id.card_font), 22f)
 
         findViewById<Button>(R.id.btn_back).setOnClickListener { finish() }
         findViewById<Button>(R.id.btn_permission).setOnClickListener { requestPermission() }
@@ -58,6 +71,14 @@ class SettingsActivity : Activity() {
         findViewById<Button>(R.id.btn_decode_mode).setOnClickListener { cycleDecodeMode() }
         findViewById<Button>(R.id.btn_display_mode).setOnClickListener { cycleDisplayMode() }
         findViewById<Button>(R.id.btn_default_mode).setOnClickListener { cycleDefaultMode() }
+
+        // 界面字体：全局唯一字号开关，调完重建即见即所得
+        findViewById<Button>(R.id.btn_font_down).setOnClickListener { changeFontScale(up = false) }
+        findViewById<Button>(R.id.btn_font_up).setOnClickListener { changeFontScale(up = true) }
+        findViewById<Button>(R.id.btn_font_reset).setOnClickListener {
+            FontScale.reset(this)
+            recreate()
+        }
 
         bindSwitch(R.id.switch_scan_on_mount, library.settings.scanOnMount) { library.settings.scanOnMount = it }
         bindSwitch(R.id.switch_auto_play, library.settings.autoPlayOnMount) { library.settings.autoPlayOnMount = it }
@@ -67,7 +88,17 @@ class SettingsActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        // 字号在播放菜单被改过 → 重建界面按新字号渲染
+        if (library.settings.fontScale != appliedFontScale) {
+            recreate()
+            return
+        }
         render()
+    }
+
+    private fun changeFontScale(up: Boolean) {
+        FontScale.adjust(this, up)
+        recreate()
     }
 
     private fun bindSwitch(id: Int, checked: Boolean, onChange: (Boolean) -> Unit) {
@@ -90,6 +121,7 @@ class SettingsActivity : Activity() {
         }
         textDisplayMode.text = "画面适配：" + DisplayModes.label(library.settings.displayMode)
         textDefaultMode.text = "默认播放模式：" + PlayerModes.label(library.settings.defaultPlaybackMode)
+        textFontScale.text = FontScale.label(library.settings.fontScale)
         renderSources()
     }
 
