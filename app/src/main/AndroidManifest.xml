@@ -27,7 +27,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.MyApplication">
+        android:theme="@style/Theme.CarVideo">
 
         <!-- 抖音式沉浸播放页（统一播放入口：启动随机播 / 管理页点击进入） -->
         <activity

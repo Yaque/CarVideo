@@ -5,13 +5,13 @@ plugins {
 }
 
 android {
-    namespace = "com.aiocw.myapplication"
+    namespace = "com.aiocw.carvideo"
     compileSdk {
         version = release(37)
     }
 
     defaultConfig {
-        applicationId = "com.aiocw.myapplication"
+        applicationId = "com.aiocw.carvideo"
         minSdk = 30          // 目标车机 Android 11（API 30）
         targetSdk = 37
         versionCode = 1

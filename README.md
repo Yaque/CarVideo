@@ -1,4 +1,6 @@
-# 车机 Android 11 本地视频播放器
+# 车视（车机 Android 11 本地视频播放器）
+
+包名 `com.aiocw.carvideo`，应用名「车视」。
 
 基于 [Yaque/My-Application](https://github.com/Yaque/My-Application)（Android for Cars 模板）改造：
 移除 Android Auto 投屏（`:mobile`）与 Car App Library 模板宿主（CAL 不承载视频 Surface），
@@ -36,6 +38,8 @@
   Library.kt     媒体库聚合入口
 ```
 
+> 注：源码包结构为 `com.aiocw.carvideo.*`（`:app` 与 `:shared` 同构）。
+
 ## 构建
 
 用 Android Studio 打开根目录即可（AGP 9.3.3 / Gradle 9.5 / 内置 Kotlin，无需额外 Kotlin 插件）。
@@ -53,7 +57,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 3. **量产预授权**（ADB / MDM / 产线）：
 
    ```bash
-   adb shell appops set --uid com.aiocw.myapplication MANAGE_EXTERNAL_STORAGE allow
+   adb shell appops set --uid com.aiocw.carvideo MANAGE_EXTERNAL_STORAGE allow
    ```
 
 4. **删除**：`File.delete()` 直删 + 收藏/进度清理 + 重扫；先从播放列表移除再删文件；

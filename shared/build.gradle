@@ -4,7 +4,7 @@ plugins {
     id 'com.android.library'
 }
 android {
-    namespace 'com.aiocw.myapplication.shared'
+    namespace 'com.aiocw.carvideo.shared'
     compileSdk 37
 
     defaultConfig {
